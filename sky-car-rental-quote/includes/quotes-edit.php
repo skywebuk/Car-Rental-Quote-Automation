@@ -283,11 +283,14 @@ function crqa_edit_quote_page($quote_id) {
     }
     
     // Handle form submission
-if (isset($_POST['submit'])) {
-    crqa_update_quote($quote_id);
-    // Instead of redirecting, set a flag for showing success message
-    $update_success = true;
-}
+    if (isset($_POST['submit'])) {
+        // Verify nonce before processing (also verified inside crqa_update_quote as defense-in-depth)
+        if (isset($_POST['_wpnonce']) && wp_verify_nonce($_POST['_wpnonce'], 'edit_quote_' . $quote_id)) {
+            crqa_update_quote($quote_id);
+            // Instead of redirecting, set a flag for showing success message
+            $update_success = true;
+        }
+    }
     
     // Handle send quote action
     if (isset($_POST['send_quote'])) {
