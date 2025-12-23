@@ -1,0 +1,802 @@
+/**
+ * Car Rental Quotes Admin Styles
+ * Complete Mobile-Responsive CSS
+ * File: /wp-content/plugins/car-rental-quote-automation/assets/css/quotes-admin.css
+ */
+
+/* ==========================================================================
+   Base Styles
+   ========================================================================== */
+
+/* Container - Add right padding */
+.crqa-wrap {
+    margin-right: 20px;
+}
+
+/* Add padding to entire admin content area */
+#wpbody-content {
+    padding-right: 20px;
+}
+
+.wrap.crqa-wrap {
+    margin-right: 20px;
+    max-width: 100%;
+}
+
+/* Table improvements for desktop */
+.wp-list-table td,
+.wp-list-table th {
+    vertical-align: middle;
+}
+
+.wp-list-table tbody tr:hover {
+    background-color: #f6f7f7;
+}
+
+.wp-list-table tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+/* Status Badges */
+.status-badge {
+    display: inline-block;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    white-space: nowrap;
+    letter-spacing: 0.5px;
+}
+
+.status-pending { 
+    background: #fcf4e3; 
+    color: #996800;
+    border: 1px solid #f0e5c7;
+}
+
+.status-quoted { 
+    background: #e5f5fa; 
+    color: #006799;
+    border: 1px solid #bee5eb;
+}
+
+.status-paid { 
+    background: #edf7ed; 
+    color: #1e7e34;
+    border: 1px solid #c3e6c3;
+}
+
+/* Row Actions - Desktop */
+.row-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.row-actions a {
+    text-decoration: none;
+    padding: 6px 12px;
+    border-radius: 3px;
+    font-size: 13px;
+    font-weight: 500;
+    display: inline-block;
+    transition: all 0.2s ease;
+    border: 1px solid;
+}
+
+.row-actions .edit { 
+    color: #0073aa;
+    background: #f3f5f6;
+    border-color: #0073aa;
+}
+
+.row-actions .edit:hover {
+    background: #0073aa;
+    color: #fff;
+}
+
+.row-actions .view { 
+    color: #50575e;
+    background: #f3f5f6;
+    border-color: #50575e;
+}
+
+.row-actions .view:hover {
+    background: #50575e;
+    color: #fff;
+}
+
+.row-actions .resend { 
+    color: #006799;
+    background: #f3f5f6;
+    border-color: #006799;
+}
+
+.row-actions .resend:hover {
+    background: #006799;
+    color: #fff;
+}
+
+.row-actions .delete { 
+    color: #d63638;
+    background: #fcf0f1;
+    border-color: #d63638;
+}
+
+.row-actions .delete:hover {
+    background: #d63638;
+    color: #fff;
+}
+
+/* Hide duplicate action */
+.row-actions .duplicate {
+    display: none !important;
+}
+
+/* Customer Info */
+.crqa-customer-info {
+    line-height: 1.5;
+}
+
+.crqa-customer-info .name {
+    font-weight: 600;
+    color: #1d2327;
+    font-size: 14px;
+}
+
+.crqa-customer-info .email {
+    color: #0073aa;
+    font-size: 13px;
+    text-decoration: none;
+}
+
+.crqa-customer-info .email:hover {
+    text-decoration: underline;
+}
+
+.crqa-customer-info .phone {
+    color: #50575e;
+    font-size: 12px;
+}
+
+/* Make Quote ID clickable */
+.column-primary strong {
+    cursor: pointer;
+    color: #0073aa;
+    transition: color 0.2s ease;
+}
+
+.column-primary strong:hover {
+    color: #005a87;
+    text-decoration: underline;
+}
+
+/* Statistics Boxes */
+.quote-statistics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    margin-top: 30px;
+}
+
+.stat-box {
+    background: #fff;
+    padding: 24px;
+    border: 1px solid #c3c4c7;
+    box-shadow: 0 1px 3px rgba(0,0,0,.04);
+    border-radius: 8px;
+    transition: box-shadow 0.2s ease;
+}
+
+.stat-box:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,.08);
+}
+
+.stat-box h3 {
+    margin: 0 0 16px 0;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #50575e;
+}
+
+.stat-box p {
+    margin: 12px 0;
+    color: #50575e;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.stat-box strong {
+    color: #1d2327;
+    font-size: 18px;
+}
+
+/* Price display improvements */
+.price-display {
+    line-height: 1.4;
+}
+
+.price-main {
+    font-weight: 600;
+    font-size: 15px;
+    color: #1d2327;
+}
+
+.price-deposit {
+    font-size: 12px;
+    color: #50575e;
+}
+
+/* Filter Toggle Button (Hidden by default) */
+.crqa-filter-toggle {
+    display: none;
+}
+
+/* ==========================================================================
+   Edit Page Improvements
+   ========================================================================== */
+
+.form-table th {
+    width: 200px;
+    font-weight: 600;
+}
+
+.form-table td {
+    padding: 15px 10px;
+}
+
+.form-table input[type="text"],
+.form-table input[type="email"],
+.form-table input[type="number"],
+.form-table select,
+.form-table textarea {
+    max-width: 500px;
+}
+
+/* ==========================================================================
+   WordPress Admin Mobile Styles (max-width: 782px)
+   ========================================================================== */
+
+@media screen and (max-width: 782px) {
+    
+    /* Add padding to mobile wrapper */
+    .wrap.crqa-wrap {
+        padding: 0 10px;
+    }
+    
+    /* Show filter toggle on mobile */
+    .toplevel_page_car-rental-quotes .crqa-filter-toggle {
+        display: block !important;
+        margin: 15px 0;
+        width: 100%;
+        padding: 12px;
+        font-size: 16px;
+        background: #0073aa;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+    }
+    
+    /* Filter visibility classes */
+    .toplevel_page_car-rental-quotes .tablenav.mobile-hidden {
+        display: none !important;
+    }
+    
+    .toplevel_page_car-rental-quotes .tablenav.mobile-visible {
+        display: block !important;
+        background: #f0f0f1;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        border: 1px solid #c3c4c7;
+    }
+    
+    /* Hide table headers and footers */
+    .toplevel_page_car-rental-quotes .wp-list-table thead,
+    .toplevel_page_car-rental-quotes .wp-list-table tfoot {
+        display: none !important;
+    }
+    
+    /* Remove borders from main table */
+    .toplevel_page_car-rental-quotes .wp-list-table {
+        border: none !important;
+        box-shadow: none !important;
+    }
+    
+    /* Convert table structure to block */
+    .toplevel_page_car-rental-quotes .wp-list-table,
+    .toplevel_page_car-rental-quotes .wp-list-table tbody {
+        display: block !important;
+        width: 100% !important;
+    }
+    
+    /* Style each row as a card */
+    .toplevel_page_car-rental-quotes .wp-list-table tbody tr {
+        display: block !important;
+        margin-bottom: 15px !important;
+        background: #fff !important;
+        border: 1px solid #c3c4c7 !important;
+        border-radius: 8px !important;
+        padding: 0 !important;
+        position: relative !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,.08) !important;
+        overflow: hidden !important;
+    }
+    
+    /* By default, show only header */
+    .toplevel_page_car-rental-quotes .wp-list-table tbody tr:not(.expanded) td:not(.column-primary):not(.check-column) {
+        display: none !important;
+    }
+    
+    /* Hide all cells initially */
+    .toplevel_page_car-rental-quotes .wp-list-table tbody tr td {
+        display: none !important;
+        width: 100% !important;
+        padding: 12px 15px !important;
+        border: none !important;
+        border-bottom: none !important;
+        position: relative !important;
+        text-align: left !important;
+        line-height: 1.5 !important;
+    }
+    
+    /* Always show checkbox and primary column */
+    .toplevel_page_car-rental-quotes .wp-list-table tbody tr td.column-primary,
+    .toplevel_page_car-rental-quotes .wp-list-table tbody tr td.check-column {
+        display: block !important;
+    }
+    
+    /* When expanded, show these cells */
+    .toplevel_page_car-rental-quotes .wp-list-table tbody tr.expanded td:nth-child(3), /* Customer */
+    .toplevel_page_car-rental-quotes .wp-list-table tbody tr.expanded td:nth-child(4), /* Vehicle */
+    .toplevel_page_car-rental-quotes .wp-list-table tbody tr.expanded td:nth-child(5), /* Dates */
+    .toplevel_page_car-rental-quotes .wp-list-table tbody tr.expanded td:nth-child(6), /* Status */
+    .toplevel_page_car-rental-quotes .wp-list-table tbody tr.expanded td:nth-child(7), /* Price */
+    .toplevel_page_car-rental-quotes .wp-list-table tbody tr.expanded td:nth-child(8), /* Created */
+    .toplevel_page_car-rental-quotes .wp-list-table tbody tr.expanded td:last-child /* Actions */ {
+        display: block !important;
+    }
+    
+    /* Mobile card header with Quote ID and Customer Name */
+    .toplevel_page_car-rental-quotes .wp-list-table td.column-primary {
+        background: #f0f0f1 !important;
+        padding: 15px 50px 15px 15px !important;
+        margin: 0 !important;
+        font-weight: 600 !important;
+        font-size: 16px !important;
+        color: #1d2327 !important;
+        border-bottom: none !important;
+        position: relative !important;
+        cursor: pointer !important;
+        min-height: 60px !important;
+    }
+    
+    /* Add expand/collapse indicator */
+    .toplevel_page_car-rental-quotes .wp-list-table td.column-primary:after {
+        content: "▼" !important;
+        position: absolute !important;
+        right: 15px !important;
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+        font-size: 12px !important;
+        color: #666 !important;
+        transition: transform 0.3s ease !important;
+    }
+    
+    .toplevel_page_car-rental-quotes .wp-list-table tbody tr.expanded td.column-primary:after {
+        transform: translateY(-50%) rotate(180deg) !important;
+    }
+    
+    /* Add customer name to header */
+    .toplevel_page_car-rental-quotes .wp-list-table td.column-primary .mobile-customer-name {
+        display: block !important;
+        font-size: 14px !important;
+        color: #666 !important;
+        font-weight: normal !important;
+        margin-top: 5px !important;
+    }
+    
+    /* Checkbox positioning */
+    .toplevel_page_car-rental-quotes .wp-list-table .check-column {
+        display: block !important;
+        position: absolute !important;
+        top: 20px !important;
+        right: 40px !important;
+        width: auto !important;
+        padding: 0 !important;
+        background: transparent !important;
+        border: none !important;
+        z-index: 10 !important;
+    }
+    
+    /* Hide WordPress toggle button */
+    .toplevel_page_car-rental-quotes .toggle-row {
+        display: none !important;
+    }
+    
+    /* Style individual sections when expanded */
+    .toplevel_page_car-rental-quotes .wp-list-table tbody tr.expanded td {
+        padding-left: 35% !important;
+        min-height: 40px !important;
+        display: flex !important;
+        align-items: center !important;
+    }
+    
+    /* Add labels before content */
+    .toplevel_page_car-rental-quotes .wp-list-table tbody tr.expanded td[data-label]:before {
+        content: attr(data-label) ":";
+        position: absolute !important;
+        left: 15px !important;
+        font-weight: 600 !important;
+        color: #50575e !important;
+        font-size: 13px !important;
+        width: 30% !important;
+    }
+    
+    /* Customer section */
+    .toplevel_page_car-rental-quotes .wp-list-table tbody tr.expanded td:nth-child(3) {
+        border-top: 1px solid #e0e0e0 !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        padding-left: 15px !important;
+        padding-top: 15px !important;
+        padding-bottom: 15px !important;
+    }
+    
+    .toplevel_page_car-rental-quotes .wp-list-table tbody tr.expanded td:nth-child(3):before {
+        position: static !important;
+        margin-bottom: 8px !important;
+        display: block !important;
+        width: 100% !important;
+    }
+    
+    /* Make customer info block level */
+    .toplevel_page_car-rental-quotes .crqa-customer-info {
+        width: 100% !important;
+    }
+    
+    .toplevel_page_car-rental-quotes .crqa-customer-info > div {
+        margin-bottom: 4px !important;
+    }
+    
+    /* Actions section special styling */
+    .toplevel_page_car-rental-quotes .wp-list-table tbody tr.expanded td:last-child {
+        padding: 15px !important;
+        background: #f6f7f7 !important;
+        border-top: 1px solid #e0e0e0 !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+    
+    .toplevel_page_car-rental-quotes .wp-list-table tbody tr.expanded td:last-child:before {
+        display: none !important;
+    }
+    
+    /* Row actions mobile optimized */
+    .toplevel_page_car-rental-quotes .row-actions {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 8px !important;
+        margin: 0 !important;
+        width: 100% !important;
+    }
+    
+    .toplevel_page_car-rental-quotes .row-actions a {
+        padding: 10px !important;
+        text-align: center !important;
+        font-size: 14px !important;
+        border-radius: 4px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    
+    /* Full width for delete button */
+    .toplevel_page_car-rental-quotes .row-actions .delete {
+        grid-column: 1 / -1 !important;
+    }
+    
+    /* Filter Section Mobile */
+    .toplevel_page_car-rental-quotes .tablenav .alignleft,
+    .toplevel_page_car-rental-quotes .tablenav .alignright {
+        float: none !important;
+        width: 100% !important;
+        margin-bottom: 10px !important;
+    }
+    
+    .toplevel_page_car-rental-quotes .tablenav select,
+    .toplevel_page_car-rental-quotes .tablenav input[type="date"],
+    .toplevel_page_car-rental-quotes .tablenav input[type="search"] {
+        width: 100% !important;
+        margin-bottom: 10px !important;
+        height: 44px !important;
+        font-size: 16px !important;
+        padding: 8px 12px !important;
+        border-radius: 4px !important;
+        box-sizing: border-box !important;
+    }
+    
+    .toplevel_page_car-rental-quotes .button {
+        height: 44px !important;
+        font-size: 16px !important;
+        padding: 0 20px !important;
+    }
+    
+    .toplevel_page_car-rental-quotes .search-box {
+        position: static !important;
+        width: 100% !important;
+        margin: 0 !important;
+    }
+    
+    /* Statistics Mobile */
+    .toplevel_page_car-rental-quotes .quote-statistics {
+        grid-template-columns: 1fr !important;
+        gap: 15px !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+    
+    /* Prevent text overlap */
+    .toplevel_page_car-rental-quotes * {
+        word-wrap: break-word !important;
+        overflow-wrap: break-word !important;
+    }
+    
+    /* Fix overlapping elements */
+    .toplevel_page_car-rental-quotes .wp-list-table tbody tr td > * {
+        max-width: 100% !important;
+    }
+}
+
+/* ==========================================================================
+   Desktop Improvements
+   ========================================================================== */
+
+@media screen and (min-width: 783px) {
+    /* Better spacing for desktop */
+    .toplevel_page_car-rental-quotes .wp-list-table td,
+    .toplevel_page_car-rental-quotes .wp-list-table th {
+        padding: 12px 10px;
+    }
+    
+    /* Improved column widths */
+    .toplevel_page_car-rental-quotes .wp-list-table .column-primary {
+        width: 100px;
+    }
+    
+    .toplevel_page_car-rental-quotes .wp-list-table .check-column {
+        width: 2.2em;
+        padding: 8px 0 0 0;
+        vertical-align: middle;
+    }
+    
+    /* Better alignment */
+    .toplevel_page_car-rental-quotes .wp-list-table tbody tr td {
+        vertical-align: middle;
+    }
+    
+    /* Edit page improvements */
+    .toplevel_page_car-rental-quotes .form-table {
+        margin-top: 20px;
+    }
+    
+    .toplevel_page_car-rental-quotes .form-table th {
+        width: 220px;
+        padding: 20px 10px 20px 0;
+        vertical-align: top;
+    }
+    
+    .toplevel_page_car-rental-quotes .form-table td {
+        padding: 20px 10px;
+    }
+    
+    /* Group related fields */
+    .form-section {
+        background: #fff;
+        border: 1px solid #c3c4c7;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .form-section h3 {
+        margin-top: 0;
+        margin-bottom: 20px;
+        color: #1d2327;
+        font-size: 16px;
+    }
+}
+
+/* ==========================================================================
+   Smaller Mobile Devices (max-width: 480px)
+   ========================================================================== */
+
+@media screen and (max-width: 480px) {
+    /* Single column for action buttons on very small screens */
+    .toplevel_page_car-rental-quotes .row-actions {
+        grid-template-columns: 1fr !important;
+    }
+    
+    /* Smaller text for space saving */
+    .toplevel_page_car-rental-quotes .wp-list-table {
+        font-size: 14px !important;
+    }
+    
+    /* Stack status and price vertically */
+    .toplevel_page_car-rental-quotes .wp-list-table tbody tr td:nth-child(6),
+    .toplevel_page_car-rental-quotes .wp-list-table tbody tr td:nth-child(7) {
+        display: block !important;
+        width: 100% !important;
+    }
+}
+
+/* ==========================================================================
+   Print Styles
+   ========================================================================== */
+
+@media print {
+    .tablenav,
+    .row-actions,
+    .check-column,
+    .page-title-action,
+    .crqa-filter-toggle,
+    .submit {
+        display: none !important;
+    }
+    
+    .wp-list-table tr {
+        page-break-inside: avoid;
+    }
+    
+    .status-badge {
+        border: 1px solid #000 !important;
+        background: none !important;
+        color: #000 !important;
+    }
+}
+
+/* ==========================================================================
+   Accessibility and Focus States
+   ========================================================================== */
+
+.toplevel_page_car-rental-quotes a:focus,
+.toplevel_page_car-rental-quotes button:focus,
+.toplevel_page_car-rental-quotes input:focus,
+.toplevel_page_car-rental-quotes select:focus,
+.toplevel_page_car-rental-quotes textarea:focus {
+    outline: 2px solid #0073aa;
+    outline-offset: 2px;
+    box-shadow: none;
+}
+
+/* Hover state for clickable quote IDs */
+.column-primary strong {
+    position: relative;
+}
+
+.column-primary strong:hover::after {
+    content: "Click to edit";
+    position: absolute;
+    bottom: -20px;
+    left: 0;
+    font-size: 11px;
+    color: #666;
+    font-weight: normal;
+    white-space: nowrap;
+    background: #fff;
+    padding: 2px 5px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    z-index: 10;
+}
+
+/**
+ * Additional styles for improved pagination and trash view
+ * Add this to your quotes-admin.css file
+ */
+
+/* Views (All, Trash) styling */
+.crqa-wrap .subsubsub {
+    float: none;
+    margin: 10px 0 20px 0;
+    padding: 0;
+}
+
+.crqa-wrap .subsubsub li {
+    display: inline-block;
+    margin: 0;
+}
+
+.crqa-wrap .subsubsub a {
+    line-height: 2;
+    padding: .2em;
+    text-decoration: none;
+    color: #0073aa;
+}
+
+.crqa-wrap .subsubsub a.current {
+    color: #000;
+    font-weight: 600;
+    border: none;
+}
+
+.crqa-wrap .subsubsub .count {
+    color: #555d66;
+    font-weight: 400;
+}
+
+/* Improved pagination styles to match your example */
+.crqa-wrap .tablenav-pages {
+    float: right;
+    height: 28px;
+    margin-top: 3px;
+    cursor: default;
+    color: #555d66;
+}
+
+.crqa-wrap .tablenav-pages .pagination-links {
+    display: inline-block;
+}
+
+.crqa-wrap .tablenav-pages .button,
+.crqa-wrap .tablenav-pages .tablenav-pages-navspan {
+    display: inline-block;
+    vertical-align: baseline;
+    min-width: 30px;
+    min-height: 30px;
+    margin: 0 1px;
+    padding: 0 8px;
+    font-size: 13px;
+    line-height: 28px;
+    text-align: center;
+    text-decoration: none;
+}
+
+.crqa-wrap .tablenav-pages .button {
+    background: #f1f1f1;
+    color: #0073aa;
+    border: 1px solid #ccc;
+}
+
+.crqa-wrap .tablenav-pages .button:hover {
+    background: #f0f0f0;
+    border-color: #999;
+    color: #222;
+}
+
+.crqa-wrap .tablenav-pages .button.disabled,
+.crqa-wrap .tablenav-pages .tablenav-pages-navspan.disabled {
+    color: #a0a5aa;
+    background: #f7f7f7;
+    border-color: #ddd;
+    cursor: default;
+    opacity: 0.5;
+}
+
+.crqa-wrap .tablenav-pages .paging-input {
+    margin: 0 8px;
+}
+
+.crqa-wrap .tablenav-pages .current-page {
+    display: inline-block;
+    padding: 0 5px;
+    font-size: 13px;
+    line-height: 28px;
+    font-weight: normal;
+}
+
+.crqa-wrap .tablenav-pages .total-pages {
+    font-weight: normal;
+}
+
+/* Trash view specific */
+.crqa-wrap .row-actions .restore {
+    color: #006505;
+}
+
+.crqa-wrap .row-actions .trash {
+    color: #a00;
+}

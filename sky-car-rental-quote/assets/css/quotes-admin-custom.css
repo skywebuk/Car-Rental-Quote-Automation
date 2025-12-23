@@ -1,0 +1,757 @@
+/**
+ * Car Rental Quotes Admin - Clean CSS
+ * Modern, Responsive, and Lightweight
+ */
+
+/* ===============================================
+   CSS VARIABLES
+   =============================================== */
+:root {
+    /* Colors */
+    --primary: #2271b1;
+    --primary-hover: #135e96;
+    --success: #00a32a;
+    --success-hover: #008a20;
+    --danger: #d63638;
+    --text: #1d2327;
+    --text-light: #50575e;
+    --text-muted: #8c8f94;
+    --bg-white: #ffffff;
+    --bg-light: #f6f7f7;
+    --bg-gray: #f0f0f1;
+    --border: #dcdcde;
+    --border-light: #e5e5e5;
+    
+    /* Spacing */
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+    
+    /* Border Radius */
+    --radius: 8px;
+    --radius-sm: 4px;
+    --radius-lg: 12px;
+    
+    /* Shadows */
+    --shadow: 0 1px 3px rgba(0,0,0,0.1);
+    --shadow-lg: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+/* ===============================================
+   GLOBAL STYLES
+   =============================================== */
+* {
+    box-sizing: border-box;
+}
+
+.crqa-wrap {
+    max-width: 1400px;
+    margin: 20px auto;
+    padding: 0 20px;
+}
+
+/* For larger screens, increase max-width */
+@media (min-width: 1600px) {
+    .crqa-wrap {
+        max-width: 1600px;
+    }
+}
+
+/* ===============================================
+   EDIT QUOTE PAGE
+   =============================================== */
+.crqa-edit-quote {
+    background: var(--bg-white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+}
+
+/* Page Header with Actions */
+.crqa-edit-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-xl) var(--space-xl) var(--space-lg);
+    border-bottom: 1px solid var(--border-light);
+    flex-wrap: wrap;
+    gap: var(--space-md);
+}
+
+.crqa-edit-header h1 {
+    margin: 0;
+    color: var(--text);
+    font-size: 28px;
+    font-weight: 600;
+}
+
+.crqa-edit-header h1 i {
+    color: var(--primary);
+    margin-right: var(--space-sm);
+}
+
+/* Header Action Buttons */
+.crqa-header-actions {
+    display: flex;
+    gap: var(--space-sm);
+}
+
+.crqa-header-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.2s;
+    border: none;
+}
+
+.crqa-call-btn {
+    background: #28a745;
+    color: white !important;
+}
+
+.crqa-call-btn:hover {
+    background: #218838;
+    transform: translateY(-1px);
+}
+
+.crqa-whatsapp-btn {
+    background: #25d366;
+    color: white !important;
+}
+
+.crqa-whatsapp-btn:hover {
+    background: #1ebe57;
+    transform: translateY(-1px);
+}
+
+/* Form Container */
+.crqa-edit-quote form {
+    padding: var(--space-xl);
+}
+
+/* Form Grid - Full width on desktop */
+.crqa-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-lg);
+    margin-bottom: var(--space-xl);
+}
+
+/* Form Cards */
+.crqa-form-card {
+    background: var(--bg-light);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius);
+    padding: var(--space-lg);
+}
+
+.crqa-form-card h3 {
+    margin: 0 0 var(--space-lg) 0;
+    color: var(--text);
+    font-size: 18px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+
+.crqa-form-card h3 i {
+    color: var(--primary);
+    margin-right: var(--space-sm);
+    font-size: 20px;
+}
+
+/* Full Width Card */
+.crqa-full-width {
+    grid-column: 1 / -1;
+}
+
+/* Form Fields */
+.crqa-form-field {
+    margin-bottom: var(--space-lg);
+}
+
+.crqa-form-field:last-child {
+    margin-bottom: 0;
+}
+
+.crqa-form-field label {
+    display: block;
+    margin-bottom: var(--space-sm);
+    color: var(--text);
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.crqa-form-field input,
+.crqa-form-field select,
+.crqa-form-field textarea {
+    width: 100%;
+    padding: var(--space-sm) var(--space-md);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 16px;
+    background: var(--bg-white);
+    transition: border-color 0.2s;
+}
+
+.crqa-form-field input:focus,
+.crqa-form-field select:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.crqa-form-field input[readonly] {
+    background: var(--bg-gray);
+    cursor: not-allowed;
+}
+
+.crqa-form-field .description {
+    margin-top: var(--space-xs);
+    color: var(--text-muted);
+    font-size: 13px;
+    font-style: italic;
+}
+
+/* Vehicle Field with Button */
+.crqa-vehicle-field {
+    display: flex;
+    gap: var(--space-sm);
+    align-items: stretch;
+}
+
+.crqa-vehicle-field input {
+    flex: 1;
+    min-width: 0; /* Prevents input from growing too large */
+}
+
+.crqa-vehicle-field .button {
+    flex-shrink: 0;
+    padding: 8px 16px;
+    background: var(--primary);
+    color: white !important;
+    border: none;
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    transition: background 0.2s;
+    white-space: nowrap; /* Prevents button text from wrapping */
+}
+
+.crqa-vehicle-field .button:hover {
+    background: var(--primary-hover);
+}
+
+.crqa-vehicle-field .button i {
+    color: white;
+}
+
+/* Location Info */
+.crqa-location-info {
+    background: #e3f2fd;
+    border: 1px solid #90caf9;
+    border-radius: var(--radius-sm);
+    padding: var(--space-md);
+    margin-top: var(--space-md);
+}
+
+.crqa-location-info strong {
+    color: #1976d2;
+}
+
+/* Product Attribute Display */
+.product-attribute-display {
+    background: var(--bg-gray);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: var(--space-md);
+    font-weight: 600;
+}
+
+/* Pricing Section */
+.pricing-info {
+    background: #e3f2fd;
+    border: 1px solid #2196f3;
+    border-radius: var(--radius);
+    padding: var(--space-lg);
+    margin-bottom: var(--space-lg);
+}
+
+.pricing-info h4 {
+    margin: 0 0 var(--space-md) 0;
+    color: #1976d2;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+}
+
+.pricing-info h4 i {
+    margin-right: var(--space-sm);
+}
+
+.pricing-info p {
+    margin: var(--space-xs) 0;
+    color: var(--text);
+}
+
+#auto-calculate-price {
+    margin-top: var(--space-md);
+    background: white;
+    color: var(--primary);
+    border: 2px solid var(--primary);
+    padding: 10px 24px;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+#auto-calculate-price:hover {
+    background: var(--primary);
+    color: white;
+}
+
+#auto-calculate-price i {
+    font-size: 16px;
+}
+
+.crqa-price-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--space-lg);
+}
+
+/* Total Display */
+.crqa-total-display {
+    background: #e8f5e9;
+    border: 1px solid #4caf50;
+    border-radius: var(--radius);
+    padding: var(--space-lg);
+    margin-top: var(--space-lg);
+    text-align: center;
+}
+
+.crqa-total-label {
+    display: block;
+    color: var(--text-light);
+    font-size: 16px;
+    margin-bottom: var(--space-sm);
+}
+
+.crqa-total-amount {
+    color: #2e7d32;
+    font-size: 32px;
+    font-weight: 700;
+}
+
+/* Status Section */
+.crqa-status-section {
+    background: var(--bg-gray);
+    margin: var(--space-xl) calc(-1 * var(--space-xl));
+    padding: var(--space-lg) var(--space-xl);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+}
+
+.crqa-status-grid {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-lg);
+    flex-wrap: wrap;
+}
+
+.crqa-status-select-wrapper h3 {
+    margin: 0 0 var(--space-md) 0;
+    color: var(--text);
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+}
+
+.crqa-status-select-wrapper h3 i {
+    color: var(--primary);
+    margin-right: var(--space-sm);
+}
+
+.quote-status-select {
+    min-width: 200px;
+    padding: var(--space-sm) var(--space-md);
+    font-size: 16px;
+}
+
+/* Action Buttons */
+.crqa-action-buttons {
+    display: flex;
+    gap: var(--space-md);
+    flex-wrap: wrap;
+}
+
+.crqa-view-quote-btn,
+.crqa-send-quote-btn,
+.crqa-resend-quote-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-lg);
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.2s;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.crqa-view-quote-btn {
+    background: var(--primary);
+    color: white !important;
+}
+
+.crqa-view-quote-btn:hover {
+    background: var(--primary-hover);
+}
+
+.crqa-send-quote-btn {
+    background: var(--success);
+    color: white !important;
+}
+
+.crqa-send-quote-btn:hover {
+    background: var(--success-hover);
+}
+
+/* Resend button - outline style */
+.crqa-resend-quote-btn {
+    background: transparent;
+    color: #0073aa !important;
+    border: 2px solid #0073aa;
+}
+
+.crqa-resend-quote-btn:hover {
+    background: #0073aa;
+    color: white !important;
+}
+
+/* WordPress button overrides */
+.crqa-action-buttons .button {
+    font-size: 14px !important;
+    line-height: normal !important;
+    height: auto !important;
+}
+
+/* Submit Section */
+.crqa-submit-section {
+    background: var(--bg-light);
+    margin: var(--space-xl) calc(-1 * var(--space-xl)) 0;
+    padding: var(--space-lg) var(--space-xl);
+    border-top: 1px solid var(--border);
+}
+
+.crqa-submit-section > div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-lg);
+}
+
+.crqa-submit-section .meta-info {
+    color: var(--text-light);
+    font-size: 14px;
+}
+
+.crqa-submit-section .meta-info i {
+    color: var(--text-muted);
+    margin-right: var(--space-xs);
+}
+
+.crqa-submit-section .button-group {
+    display: flex;
+    gap: var(--space-md);
+}
+
+.crqa-submit-section .button {
+    padding: 10px 24px;
+    font-size: 15px;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    transition: all 0.2s;
+    cursor: pointer;
+    border: none;
+}
+
+.crqa-submit-section .button-primary,
+.crqa-submit-section .button-large[type="submit"] {
+    background: var(--primary);
+    color: white;
+}
+
+.crqa-submit-section .button-primary:hover,
+.crqa-submit-section .button-large[type="submit"]:hover {
+    background: var(--primary-hover);
+    transform: translateY(-1px);
+}
+
+.crqa-submit-section .button:not(.button-primary):not([type="submit"]) {
+    background: white;
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+
+.crqa-submit-section .button:not(.button-primary):not([type="submit"]):hover {
+    background: var(--bg-gray);
+    border-color: var(--text-light);
+}
+
+/* ===============================================
+   RESPONSIVE DESIGN
+   =============================================== */
+
+/* Tablet */
+@media (max-width: 782px) {
+    .wrap.crqa-wrap {
+        padding: 0 !important;
+        margin: 0 !important;
+        max-width: 100% !important;
+    }
+    
+    .crqa-edit-quote {
+        border-radius: 0 !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+    }
+    
+    .crqa-edit-header {
+        padding: var(--space-md);
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .crqa-edit-header h1 {
+        font-size: 24px;
+        margin-bottom: var(--space-md);
+    }
+    
+    .crqa-header-actions {
+        width: 100%;
+        flex-direction: column;
+        gap: var(--space-sm);
+    }
+    
+    .crqa-header-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .crqa-edit-quote form {
+        padding: var(--space-md) !important;
+    }
+    
+    /* Force single column on mobile */
+    .crqa-form-grid {
+        display: block !important;
+        gap: 0 !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        padding: 0 !important;
+    }
+    
+    .crqa-form-card {
+        margin-bottom: var(--space-md) !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        width: 100% !important;
+    }
+    
+    .crqa-status-grid {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .crqa-status-select-wrapper {
+        text-align: center;
+    }
+    
+    .quote-status-select {
+        width: 100%;
+    }
+    
+    .crqa-action-buttons {
+        flex-direction: column;
+    }
+    
+    .crqa-action-buttons > * {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    /* Vehicle field stays horizontal on tablet, only vertical on mobile */
+    
+    .crqa-submit-section {
+        margin: var(--space-lg) 0 0 !important;
+        padding: var(--space-md) !important;
+    }
+    
+    .crqa-submit-section > div {
+        flex-direction: column;
+    }
+    
+    .crqa-submit-section .meta-info {
+        text-align: center;
+        order: 2;
+    }
+    
+    .crqa-submit-section .button-group {
+        order: 1;
+        width: 100%;
+        flex-direction: column;
+    }
+    
+    .crqa-submit-section .button {
+        width: 100%;
+    }
+    
+    .crqa-status-section {
+        margin: var(--space-lg) 0 0 !important;
+        padding: var(--space-md) !important;
+    }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+    .wrap.crqa-wrap {
+        margin: 0 !important;
+        padding: 0 !important;
+        max-width: 100% !important;
+    }
+    
+    .crqa-edit-quote {
+        border-radius: 0 !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+    }
+    
+    .crqa-edit-header {
+        padding: var(--space-sm);
+    }
+    
+    .crqa-edit-header h1 {
+        font-size: 20px;
+    }
+    
+    .crqa-header-btn {
+        font-size: 13px;
+        padding: 10px 14px;
+    }
+    
+    .crqa-edit-quote form {
+        padding: var(--space-sm) !important;
+    }
+    
+    .crqa-form-card {
+        padding: var(--space-md) !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        margin-bottom: var(--space-md) !important;
+        width: 100% !important;
+    }
+    
+    .crqa-form-card h3 {
+        font-size: 16px;
+    }
+    
+    .crqa-vehicle-field {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .crqa-vehicle-field .button {
+        width: 100%;
+        justify-content: center;
+        margin-top: var(--space-sm);
+    }
+    
+    .crqa-price-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .crqa-total-amount {
+        font-size: 24px;
+    }
+    
+    .crqa-status-section {
+        margin: var(--space-lg) 0 0 !important;
+        padding: var(--space-md) !important;
+    }
+    
+    .crqa-submit-section {
+        margin: var(--space-lg) 0 0 !important;
+        padding: var(--space-md) !important;
+    }
+    
+    .crqa-submit-section .button {
+        width: 100%;
+        margin-bottom: var(--space-sm);
+    }
+    
+    .crqa-submit-section .button:last-child {
+        margin-bottom: 0;
+    }
+}
+
+/* ===============================================
+   UTILITIES
+   =============================================== */
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+.mt-sm { margin-top: var(--space-sm); }
+.mt-md { margin-top: var(--space-md); }
+.mt-lg { margin-top: var(--space-lg); }
+
+/* ===============================================
+   OVERRIDE OTHER CSS FILES
+   =============================================== */
+/* Force override quotes-admin.css styles on mobile */
+@media (max-width: 782px) {
+    /* WordPress admin specific overrides */
+    .wp-admin .wrap.crqa-wrap {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+    
+    /* Remove any container constraints */
+    .wp-admin .crqa-wrap,
+    .wp-admin .crqa-edit-quote {
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+    
+    /* Ensure form elements are full width */
+    .wp-admin .crqa-form-grid,
+    .wp-admin .crqa-form-card,
+    .wp-admin .crqa-status-section,
+    .wp-admin .crqa-submit-section {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        padding-left: var(--space-md) !important;
+        padding-right: var(--space-md) !important;
+    }
+}
