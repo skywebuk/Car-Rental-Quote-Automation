@@ -232,13 +232,13 @@ class CRQA_WPForms_Handler extends CRQA_Form_Handler_Interface {
                 $mapped_data['rental_price'] = $mapped_data['calculated_rental_price'];
             }
             if (!empty($mapped_data['calculated_rental_price']) && empty($mapped_data['deposit_amount'])) {
-    // Get deposit from product if available
-    if (!empty($mapped_data['product_id'])) {
-        $mapped_data['deposit_amount'] = crqa_get_deposit_amount($mapped_data['product_id']);
-    } else {
-        $mapped_data['deposit_amount'] = 5000; // Default deposit
-    }
-}
+                // Get deposit from product if available
+                if (!empty($mapped_data['product_id']) && function_exists('crqa_get_deposit_amount')) {
+                    $mapped_data['deposit_amount'] = crqa_get_deposit_amount($mapped_data['product_id']);
+                } else {
+                    $mapped_data['deposit_amount'] = 5000; // Default deposit
+                }
+            }
             if (!empty($mapped_data['calculated_prepaid_miles'])) {
                 $mapped_data['mileage_allowance'] = $mapped_data['calculated_prepaid_miles'];
             }
