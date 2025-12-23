@@ -22,6 +22,11 @@ if (!function_exists('crqa_format_price')) {
 function crqa_admin_page() {
     global $wpdb;
     $table_name = $wpdb->prefix . 'car_rental_quotes';
+
+    // Validate table name contains only allowed characters (alphanumeric and underscore)
+    if (!preg_match('/^[a-zA-Z0-9_]+$/', $table_name)) {
+        wp_die('Invalid table name configuration.');
+    }
     
     // Check if soft delete columns exist
     $soft_delete_supported = $wpdb->get_var($wpdb->prepare(
@@ -137,30 +142,36 @@ function crqa_admin_page() {
     }
     
     if ($search) {
-    // Remove # symbol and leading zeros if searching for quote ID
-    $cleaned_search = ltrim(str_replace('#', '', $search), '0');
-    
-    // Check if search term is numeric or starts with # (quote ID)
-    if (is_numeric($cleaned_search) || strpos($search, '#') === 0) {
-        // Search by quote ID
-        $where_clauses[] = "(id = %d OR LPAD(id, 5, '0') LIKE %s OR customer_name LIKE %s OR customer_email LIKE %s OR customer_phone LIKE %s OR vehicle_name LIKE %s)";
-        $where_values[] = intval($cleaned_search);
-        $where_values[] = '%' . $wpdb->esc_like($search) . '%';
-        $search_term = '%' . $wpdb->esc_like($search) . '%';
-        $where_values[] = $search_term;
-        $where_values[] = $search_term;
-        $where_values[] = $search_term;
-        $where_values[] = $search_term;
-    } else {
-        // Search in all text fields
-        $where_clauses[] = "(customer_name LIKE %s OR customer_email LIKE %s OR customer_phone LIKE %s OR vehicle_name LIKE %s)";
-        $search_term = '%' . $wpdb->esc_like($search) . '%';
-        $where_values[] = $search_term;
-        $where_values[] = $search_term;
-        $where_values[] = $search_term;
-        $where_values[] = $search_term;
+        // Remove # symbol and leading zeros if searching for quote ID
+        $cleaned_search = ltrim(str_replace('#', '', $search), '0');
+
+        // Properly escape the search term for LIKE queries
+        $escaped_search = $wpdb->esc_like($search);
+        $search_term = '%' . $escaped_search . '%';
+
+        // Check if search term is numeric or starts with # (quote ID)
+        if (is_numeric($cleaned_search) || strpos($search, '#') === 0) {
+            // Search by quote ID - use PHP formatting instead of SQL LPAD for security
+            $numeric_id = intval($cleaned_search);
+            $padded_id = str_pad($numeric_id, 5, '0', STR_PAD_LEFT);
+            $padded_search_term = '%' . $wpdb->esc_like($padded_id) . '%';
+
+            // Search by ID (exact match) or padded ID pattern, plus text fields
+            $where_clauses[] = "(id = %d OR customer_name LIKE %s OR customer_email LIKE %s OR customer_phone LIKE %s OR vehicle_name LIKE %s)";
+            $where_values[] = $numeric_id;
+            $where_values[] = $search_term;
+            $where_values[] = $search_term;
+            $where_values[] = $search_term;
+            $where_values[] = $search_term;
+        } else {
+            // Search in all text fields
+            $where_clauses[] = "(customer_name LIKE %s OR customer_email LIKE %s OR customer_phone LIKE %s OR vehicle_name LIKE %s)";
+            $where_values[] = $search_term;
+            $where_values[] = $search_term;
+            $where_values[] = $search_term;
+            $where_values[] = $search_term;
+        }
     }
-}
     
     if ($status_filter && $current_view !== 'trash') {
         $where_clauses[] = "quote_status = %s";
@@ -178,32 +189,37 @@ function crqa_admin_page() {
     }
     
     $where_sql = implode(' AND ', $where_clauses);
-    
-    // Get counts for views
+
+    // Sanitize table name for use in queries (already validated above)
+    $safe_table_name = esc_sql($table_name);
+
+    // Get counts for views using prepared statements
     if ($soft_delete_supported) {
-        $all_count = $wpdb->get_var("SELECT COUNT(*) FROM $table_name WHERE (is_deleted = 0 OR is_deleted IS NULL)");
-        $trash_count = $wpdb->get_var("SELECT COUNT(*) FROM $table_name WHERE is_deleted = 1");
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is validated and escaped
+        $all_count = $wpdb->get_var("SELECT COUNT(*) FROM `{$safe_table_name}` WHERE (is_deleted = 0 OR is_deleted IS NULL)");
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is validated and escaped
+        $trash_count = $wpdb->get_var("SELECT COUNT(*) FROM `{$safe_table_name}` WHERE is_deleted = 1");
     } else {
-        $all_count = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is validated and escaped
+        $all_count = $wpdb->get_var("SELECT COUNT(*) FROM `{$safe_table_name}`");
         $trash_count = 0;
     }
-    
-    // Get total count
-    $count_query = "SELECT COUNT(*) FROM $table_name WHERE $where_sql";
+
+    // Get total count with prepared statement
+    // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is validated, where_sql uses placeholders
+    $count_query = "SELECT COUNT(*) FROM `{$safe_table_name}` WHERE {$where_sql}";
     if (!empty($where_values)) {
         $count_query = $wpdb->prepare($count_query, $where_values);
     }
     $total_items = $wpdb->get_var($count_query);
-    
-    // Get quotes
-    $query = "SELECT * FROM $table_name WHERE $where_sql ORDER BY created_at DESC LIMIT %d OFFSET %d";
+
+    // Get quotes with prepared statement
+    // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is validated, where_sql uses placeholders
+    $query = "SELECT * FROM `{$safe_table_name}` WHERE {$where_sql} ORDER BY created_at DESC LIMIT %d OFFSET %d";
     $query_args = array_merge($where_values, array($per_page, $offset));
-    
-    if (!empty($where_values)) {
-        $quotes = $wpdb->get_results($wpdb->prepare($query, $query_args));
-    } else {
-        $quotes = $wpdb->get_results($wpdb->prepare($query, $per_page, $offset));
-    }
+
+    // Always use prepare() for the main query
+    $quotes = $wpdb->get_results($wpdb->prepare($query, $query_args));
     
     // Calculate pagination
     $total_pages = ceil($total_items / $per_page);
@@ -362,6 +378,7 @@ function crqa_admin_page() {
         </div>
         
         <form method="post" action="">
+            <?php wp_nonce_field('crqa_bulk_action', 'crqa_bulk_action_nonce'); ?>
             <table class="wp-list-table widefat fixed striped crqa-table">
                 <thead>
                     <tr>
@@ -533,10 +550,20 @@ function crqa_handle_bulk_actions() {
     if (!isset($_POST['quote_ids']) || empty($_POST['quote_ids'])) {
         return;
     }
-    
+
+    // Verify nonce for CSRF protection
+    if (!isset($_POST['crqa_bulk_action_nonce']) || !wp_verify_nonce($_POST['crqa_bulk_action_nonce'], 'crqa_bulk_action')) {
+        wp_die('Security check failed. Please try again.');
+    }
+
     global $wpdb;
     $table_name = $wpdb->prefix . 'car_rental_quotes';
-    
+
+    // Validate table name contains only allowed characters
+    if (!preg_match('/^[a-zA-Z0-9_]+$/', $table_name)) {
+        wp_die('Invalid table name configuration.');
+    }
+
     $action = sanitize_text_field($_POST['bulk_action']);
     $quote_ids = array_map('intval', $_POST['quote_ids']);
     
@@ -660,8 +687,15 @@ function crqa_get_quote_actions($quote, $view = 'all', $soft_delete_supported = 
 function crqa_duplicate_quote($quote_id) {
     global $wpdb;
     $table_name = $wpdb->prefix . 'car_rental_quotes';
-    
-    $quote = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_name WHERE id = %d", $quote_id), ARRAY_A);
+
+    // Validate table name contains only allowed characters
+    if (!preg_match('/^[a-zA-Z0-9_]+$/', $table_name)) {
+        return false;
+    }
+    $safe_table_name = esc_sql($table_name);
+
+    // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is validated and escaped
+    $quote = $wpdb->get_row($wpdb->prepare("SELECT * FROM `{$safe_table_name}` WHERE id = %d", $quote_id), ARRAY_A);
     
     if ($quote) {
         unset($quote['id']);
@@ -679,13 +713,21 @@ function crqa_duplicate_quote($quote_id) {
 function crqa_export_quotes($quote_ids = array()) {
     global $wpdb;
     $table_name = $wpdb->prefix . 'car_rental_quotes';
-    
+
+    // Validate table name contains only allowed characters
+    if (!preg_match('/^[a-zA-Z0-9_]+$/', $table_name)) {
+        wp_die('Invalid table name configuration.');
+    }
+    $safe_table_name = esc_sql($table_name);
+
     // Get quotes
     if (!empty($quote_ids)) {
         $placeholders = implode(',', array_fill(0, count($quote_ids), '%d'));
-        $quotes = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE id IN ($placeholders)", $quote_ids));
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is validated, placeholders are safe
+        $quotes = $wpdb->get_results($wpdb->prepare("SELECT * FROM `{$safe_table_name}` WHERE id IN ($placeholders)", $quote_ids));
     } else {
-        $quotes = $wpdb->get_results("SELECT * FROM $table_name");
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is validated and escaped
+        $quotes = $wpdb->get_results("SELECT * FROM `{$safe_table_name}`");
     }
     
     // Set headers for CSV download
@@ -746,28 +788,53 @@ function crqa_export_quotes($quote_ids = array()) {
  */
 add_action('wp_ajax_crqa_quick_edit', 'crqa_ajax_quick_edit');
 function crqa_ajax_quick_edit() {
+    // Verify user capability first
     if (!current_user_can('manage_options')) {
-        wp_die('Unauthorized');
+        wp_send_json_error('Unauthorized');
+        return;
     }
-    
-    $quote_id = intval($_POST['quote_id']);
+
+    // Verify nonce for CSRF protection
+    if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'crqa_quick_edit')) {
+        wp_send_json_error('Security check failed');
+        return;
+    }
+
+    // Validate required fields exist before processing
+    if (!isset($_POST['quote_id']) || !isset($_POST['field']) || !isset($_POST['value'])) {
+        wp_send_json_error('Missing required fields');
+        return;
+    }
+
+    // Define allowed fields BEFORE checking input
+    $allowed_fields = array('rental_price', 'deposit_amount', 'quote_status');
     $field = sanitize_text_field($_POST['field']);
+
+    // Validate field is allowed before processing further
+    if (!in_array($field, $allowed_fields, true)) {
+        wp_send_json_error('Invalid field');
+        return;
+    }
+
+    $quote_id = intval($_POST['quote_id']);
     $value = sanitize_text_field($_POST['value']);
-    
+
     global $wpdb;
     $table_name = $wpdb->prefix . 'car_rental_quotes';
-    
-    $allowed_fields = array('rental_price', 'deposit_amount', 'quote_status');
-    
-    if (in_array($field, $allowed_fields)) {
-        $wpdb->update(
-            $table_name,
-            array($field => $value),
-            array('id' => $quote_id)
-        );
-        
-        wp_send_json_success();
-    } else {
-        wp_send_json_error('Invalid field');
+
+    // Validate table name contains only allowed characters
+    if (!preg_match('/^[a-zA-Z0-9_]+$/', $table_name)) {
+        wp_send_json_error('Configuration error');
+        return;
     }
+
+    $wpdb->update(
+        $table_name,
+        array($field => $value),
+        array('id' => $quote_id),
+        array('%s'),
+        array('%d')
+    );
+
+    wp_send_json_success();
 }
