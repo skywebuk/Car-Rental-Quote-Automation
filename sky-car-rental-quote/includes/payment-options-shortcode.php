@@ -39,18 +39,34 @@ function crqa_payment_options_shortcode($atts) {
         'currency_symbol' => function_exists('get_woocommerce_currency_symbol') ? get_woocommerce_currency_symbol() : '£'
     ), $atts);
     
+    // Get enabled payment options from settings
+    $payment_options_enabled = get_option('crqa_payment_options', array(
+        'rental_only' => 1,
+        'rental_deposit' => 1,
+        'booking_fee' => 1
+    ));
+
+    // Check if at least one option is enabled
+    $has_enabled_options = !empty($payment_options_enabled['rental_only']) ||
+                           !empty($payment_options_enabled['rental_deposit']) ||
+                           !empty($payment_options_enabled['booking_fee']);
+
+    if (!$has_enabled_options) {
+        return '<p>Payment options are currently unavailable. Please contact us.</p>';
+    }
+
     // Calculate amounts - REMOVE DECIMALS
     $rental_price = intval($quote->rental_price);
     // Get deposit from quote or product
-$deposit_amount = intval($quote->deposit_amount);
-if ($deposit_amount == 0 && !empty($quote->product_id)) {
-    $deposit_amount = intval(crqa_get_deposit_amount($quote->product_id));
-}
-if ($deposit_amount == 0) {
-    $deposit_amount = 5000; // Final fallback
-}
+    $deposit_amount = intval($quote->deposit_amount);
+    if ($deposit_amount == 0 && !empty($quote->product_id)) {
+        $deposit_amount = intval(crqa_get_deposit_amount($quote->product_id));
+    }
+    if ($deposit_amount == 0) {
+        $deposit_amount = 5000; // Final fallback
+    }
     $total_amount = $rental_price + $deposit_amount;
-    $booking_fee = 500; // Fixed booking fee
+    $booking_fee = intval(get_option('crqa_booking_fee_amount', 500)); // Configurable booking fee
     
     // Generate unique ID for this instance
     $unique_id = 'crqa-payment-' . uniqid();
@@ -77,6 +93,7 @@ if ($deposit_amount == 0) {
                 </div>
                 
                 <div class="crqa-dropdown-options">
+                    <?php if (!empty($payment_options_enabled['rental_only'])): ?>
                     <div class="crqa-dropdown-option" data-value="rental_only" data-amount="<?php echo esc_attr($rental_price); ?>">
                         <div class="crqa-option-content">
                             <div class="crqa-option-title">Rental Price Only</div>
@@ -89,7 +106,9 @@ if ($deposit_amount == 0) {
                             </svg>
                         </div>
                     </div>
-                    
+                    <?php endif; ?>
+
+                    <?php if (!empty($payment_options_enabled['rental_deposit'])): ?>
                     <div class="crqa-dropdown-option" data-value="rental_deposit" data-amount="<?php echo esc_attr($total_amount); ?>">
                         <div class="crqa-option-content">
                             <div class="crqa-option-title">Rental + Deposit</div>
@@ -102,7 +121,9 @@ if ($deposit_amount == 0) {
                             </svg>
                         </div>
                     </div>
-                    
+                    <?php endif; ?>
+
+                    <?php if (!empty($payment_options_enabled['booking_fee'])): ?>
                     <div class="crqa-dropdown-option" data-value="booking_fee" data-amount="<?php echo esc_attr($booking_fee); ?>">
                         <div class="crqa-option-content">
                             <div class="crqa-option-title">Secure Booking Only</div>
@@ -115,6 +136,7 @@ if ($deposit_amount == 0) {
                             </svg>
                         </div>
                     </div>
+                    <?php endif; ?>
                 </div>
             </div>
             
@@ -623,7 +645,8 @@ function crqa_add_to_cart_with_option() {
             break;
             
         case 'booking_fee':
-            $cart_item_data['crqa_rental_price'] = 500;
+            $booking_fee_amount = intval(get_option('crqa_booking_fee_amount', 500));
+            $cart_item_data['crqa_rental_price'] = $booking_fee_amount;
             $cart_item_data['crqa_deposit_amount'] = 0;
             $cart_item_data['crqa_payment_description'] = 'Booking Fee (Balance due later)';
             $cart_item_data['crqa_is_booking_fee'] = true;
