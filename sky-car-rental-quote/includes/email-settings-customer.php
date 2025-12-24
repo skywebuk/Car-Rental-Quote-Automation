@@ -982,10 +982,20 @@ function crqa_send_quote_email($quote_id) {
     $company_name = get_option('crqa_company_name', 'Your Car Rental Company');
     $company_email = get_option('crqa_company_email', get_option('admin_email'));
     $email_logo = get_option('crqa_email_logo', '');
-    
+
+    // Sanitize company name for email header to prevent header injection
+    $safe_company_name = preg_replace('/[\r\n\t]/', '', $company_name);
+    $safe_company_name = sanitize_text_field($safe_company_name);
+
+    // Validate and sanitize email
+    $safe_company_email = sanitize_email($company_email);
+    if (!is_email($safe_company_email)) {
+        $safe_company_email = get_option('admin_email');
+    }
+
     $quote_url = home_url('/quote/' . $quote->quote_hash);
-    
-    $subject = 'Your Car Rental Quote from ' . $company_name;
+
+    $subject = 'Your Car Rental Quote from ' . $safe_company_name;
     
     // Get email template settings
     $email_header_text = get_option('crqa_email_header_text', 'Dear [crqa_customer_name],');
@@ -1021,9 +1031,9 @@ Kind regards,
     
     $headers = array(
         'Content-Type: text/html; charset=UTF-8',
-        'From: ' . $company_name . ' <' . $company_email . '>'
+        'From: ' . $safe_company_name . ' <' . $safe_company_email . '>'
     );
-    
+
     wp_mail($quote->customer_email, $subject, $message, $headers);
 }
 
@@ -1071,10 +1081,20 @@ function crqa_send_quote_email_test($quote) {
     $company_name = get_option('crqa_company_name', 'Your Car Rental Company');
     $company_email = get_option('crqa_company_email', get_option('admin_email'));
     $email_logo = get_option('crqa_email_logo', '');
-    
+
+    // Sanitize company name for email header to prevent header injection
+    $safe_company_name = preg_replace('/[\r\n\t]/', '', $company_name);
+    $safe_company_name = sanitize_text_field($safe_company_name);
+
+    // Validate and sanitize email
+    $safe_company_email = sanitize_email($company_email);
+    if (!is_email($safe_company_email)) {
+        $safe_company_email = get_option('admin_email');
+    }
+
     $quote_url = home_url('/quote/test-preview');
-    
-    $subject = '[TEST] Your Car Rental Quote from ' . $company_name;
+
+    $subject = '[TEST] Your Car Rental Quote from ' . $safe_company_name;
     
     // Get email template settings
     $email_header_text = get_option('crqa_email_header_text', 'Dear [crqa_customer_name],');
@@ -1110,10 +1130,10 @@ Kind regards,
     
     $headers = array(
         'Content-Type: text/html; charset=UTF-8',
-        'From: ' . $company_name . ' <' . $company_email . '>'
+        'From: ' . $safe_company_name . ' <' . $safe_company_email . '>'
     );
-    
-    wp_mail($company_email, $subject, $message, $headers);
+
+    wp_mail($safe_company_email, $subject, $message, $headers);
 }
 
 ?>

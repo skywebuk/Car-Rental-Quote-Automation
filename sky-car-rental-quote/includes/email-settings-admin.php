@@ -279,8 +279,19 @@ function crqa_send_enhanced_admin_notification($quote_id, $data) {
     $company_name = get_option('crqa_company_name', 'Your Car Rental Company');
     $company_email = get_option('crqa_company_email', get_option('admin_email'));
     $email_logo = get_option('crqa_email_logo', '');
-    
-    $subject = sprintf('[%s] New Car Rental Quote Request #%s', $company_name, str_pad($quote_id, 5, '0', STR_PAD_LEFT));
+
+    // Sanitize company name for email header to prevent header injection
+    // Remove newlines, carriage returns, and other control characters
+    $safe_company_name = preg_replace('/[\r\n\t]/', '', $company_name);
+    $safe_company_name = sanitize_text_field($safe_company_name);
+
+    // Validate and sanitize email
+    $safe_company_email = sanitize_email($company_email);
+    if (!is_email($safe_company_email)) {
+        $safe_company_email = get_option('admin_email');
+    }
+
+    $subject = sprintf('[%s] New Car Rental Quote Request #%s', $safe_company_name, str_pad($quote_id, 5, '0', STR_PAD_LEFT));
     
     // Clean and format phone number for WhatsApp/Call
     $phone_number = crqa_clean_phone_number($quote->customer_phone);
@@ -324,7 +335,7 @@ function crqa_send_enhanced_admin_notification($quote_id, $data) {
     
     $headers = array(
         'Content-Type: text/html; charset=UTF-8',
-        'From: ' . $company_name . ' <' . $company_email . '>'
+        'From: ' . $safe_company_name . ' <' . $safe_company_email . '>'
     );
     
     // Send to all admin emails
