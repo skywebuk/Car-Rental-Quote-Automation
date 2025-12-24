@@ -234,15 +234,15 @@ function crqa_admin_page() {
         <?php if ($soft_delete_supported): ?>
         <ul class="subsubsub">
             <li class="all">
-                <a href="<?php echo admin_url('admin.php?page=car-rental-quotes'); ?>" 
-                   class="<?php echo $current_view === 'all' ? 'current' : ''; ?>">
-                    All <span class="count">(<?php echo $all_count; ?>)</span>
+                <a href="<?php echo esc_url(admin_url('admin.php?page=car-rental-quotes')); ?>"
+                   class="<?php echo esc_attr($current_view === 'all' ? 'current' : ''); ?>">
+                    All <span class="count">(<?php echo intval($all_count); ?>)</span>
                 </a> |
             </li>
             <li class="trash">
-                <a href="<?php echo admin_url('admin.php?page=car-rental-quotes&view=trash'); ?>" 
-                   class="<?php echo $current_view === 'trash' ? 'current' : ''; ?>">
-                    Trash <span class="count">(<?php echo $trash_count; ?>)</span>
+                <a href="<?php echo esc_url(admin_url('admin.php?page=car-rental-quotes&view=trash')); ?>"
+                   class="<?php echo esc_attr($current_view === 'trash' ? 'current' : ''); ?>">
+                    Trash <span class="count">(<?php echo intval($trash_count); ?>)</span>
                 </a>
             </li>
         </ul>
@@ -496,8 +496,8 @@ function crqa_admin_page() {
                 <!-- Improved Pagination -->
                 <?php if ($total_pages > 1): ?>
                 <div class="tablenav-pages">
-                    <span class="displaying-num"><?php echo $total_items; ?> items</span>
-                    
+                    <span class="displaying-num"><?php echo intval($total_items); ?> items</span>
+
                     <span class="pagination-links">
                         <?php if ($current_page > 1): ?>
                             <a class="first-page button" href="<?php echo esc_url(remove_query_arg('paged')); ?>">
@@ -512,12 +512,12 @@ function crqa_admin_page() {
                             <span class="tablenav-pages-navspan button disabled" aria-hidden="true">&laquo;&laquo;</span>
                             <span class="tablenav-pages-navspan button disabled" aria-hidden="true">&laquo;</span>
                         <?php endif; ?>
-                        
+
                         <span class="paging-input">
                             <label for="current-page-selector" class="screen-reader-text">Current Page</label>
-                            <span class="current-page"><?php echo $current_page; ?></span>
-                            <span class="tablenav-paging-text"> of 
-                                <span class="total-pages"><?php echo $total_pages; ?></span>
+                            <span class="current-page"><?php echo intval($current_page); ?></span>
+                            <span class="tablenav-paging-text"> of
+                                <span class="total-pages"><?php echo intval($total_pages); ?></span>
                             </span>
                         </span>
                         

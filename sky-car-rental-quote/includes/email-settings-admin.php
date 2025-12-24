@@ -569,8 +569,8 @@ function crqa_show_quick_send_success($quote, $is_resend = false) {
     <body>
         <div class="success-container">
             <div class="success-icon">✓</div>
-            <h1><?php echo $success_title; ?></h1>
-            <p><?php echo $success_message; ?> <strong><?php echo esc_html($quote->customer_email); ?></strong></p>
+            <h1><?php echo esc_html($success_title); ?></h1>
+            <p><?php echo esc_html($success_message); ?> <strong><?php echo esc_html($quote->customer_email); ?></strong></p>
             
             <div class="details">
                 <strong>Quote Details:</strong><br>

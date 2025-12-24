@@ -606,7 +606,7 @@ $default_deposit = !empty($quote->deposit_amount) ? $quote->deposit_amount : $pr
                             <h4 style="margin: 0 0 10px 0; color: #1976d2;"><i class="fas fa-calculator"></i> Auto-Calculate Pricing</h4>
                             <p style="margin: 5px 0;"><strong>Price per day:</strong> <?php echo crqa_format_price($price_per_day); ?></p>
                             <?php if ($rental_days > 1): ?>
-                                <p style="margin: 5px 0;"><strong>Rental duration:</strong> <?php echo $rental_days; ?> days</p>
+                                <p style="margin: 5px 0;"><strong>Rental duration:</strong> <?php echo intval($rental_days); ?> days</p>
                                 <p style="margin: 5px 0;"><strong>Suggested total:</strong> <?php echo crqa_format_price($price_per_day * $rental_days); ?></p>
                             <?php endif; ?>
                             <?php if ($product_deposit && $product_deposit != 5000): ?>
@@ -722,9 +722,8 @@ $default_deposit = !empty($quote->deposit_amount) ? $quote->deposit_amount : $pr
     </div>
     
     <style>
-    /* Add Font Awesome if not loaded */
-    @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css');
-    
+    /* Font Awesome is loaded via wp_enqueue_style in quote-shared-functions.php */
+
     /* Activity Section Styles */
     .crqa-activity-section {
         background: #fff;
