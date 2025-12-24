@@ -150,6 +150,56 @@ function crqa_display_general_settings_tab($company_name, $company_email, $admin
             </td>
         </tr>
     </table>
+
+    <h3>Payment Options</h3>
+    <p>Control which payment options are available to customers on the quote page.</p>
+    <table class="form-table">
+        <?php
+        $payment_options = get_option('crqa_payment_options', array(
+            'rental_only' => 1,
+            'rental_deposit' => 1,
+            'booking_fee' => 1
+        ));
+        ?>
+        <tr>
+            <th scope="row">Rental Price Only</th>
+            <td>
+                <label>
+                    <input type="checkbox" name="payment_options[rental_only]" value="1" <?php checked(!empty($payment_options['rental_only']), true); ?>>
+                    Enable "Rental Price Only" option
+                </label>
+                <p class="description">Customer pays rental cost now, deposit due on collection day</p>
+            </td>
+        </tr>
+        <tr>
+            <th scope="row">Rental + Deposit</th>
+            <td>
+                <label>
+                    <input type="checkbox" name="payment_options[rental_deposit]" value="1" <?php checked(!empty($payment_options['rental_deposit']), true); ?>>
+                    Enable "Rental + Deposit" option
+                </label>
+                <p class="description">Customer pays full amount including refundable deposit</p>
+            </td>
+        </tr>
+        <tr>
+            <th scope="row">Booking Fee Only</th>
+            <td>
+                <label>
+                    <input type="checkbox" name="payment_options[booking_fee]" value="1" <?php checked(!empty($payment_options['booking_fee']), true); ?>>
+                    Enable "Booking Fee Only" option
+                </label>
+                <p class="description">Customer pays small booking fee to reserve, balance due later</p>
+            </td>
+        </tr>
+        <tr>
+            <th scope="row">Booking Fee Amount</th>
+            <td>
+                <?php $booking_fee_amount = get_option('crqa_booking_fee_amount', 500); ?>
+                <input type="number" name="booking_fee_amount" value="<?php echo intval($booking_fee_amount); ?>" min="0" step="1" class="small-text" />
+                <p class="description">Amount for booking fee in pence/cents (e.g., 500 = £5.00)</p>
+            </td>
+        </tr>
+    </table>
     <?php
 }
 
@@ -654,7 +704,19 @@ function crqa_save_enhanced_settings($active_tab) {
         update_option('crqa_admin_emails', $admin_emails);
         
         update_option('crqa_quote_page_id', intval($quote_page_id));
-        
+
+        // Save payment options
+        $payment_options = array(
+            'rental_only' => isset($_POST['payment_options']['rental_only']) ? 1 : 0,
+            'rental_deposit' => isset($_POST['payment_options']['rental_deposit']) ? 1 : 0,
+            'booking_fee' => isset($_POST['payment_options']['booking_fee']) ? 1 : 0
+        );
+        update_option('crqa_payment_options', $payment_options);
+
+        // Save booking fee amount
+        $booking_fee_amount = isset($_POST['booking_fee_amount']) ? intval($_POST['booking_fee_amount']) : 500;
+        update_option('crqa_booking_fee_amount', $booking_fee_amount);
+
         echo '<div class="notice notice-success is-dismissible"><p>General settings saved!</p></div>';
         
     } elseif ($active_tab == 'forms') {
