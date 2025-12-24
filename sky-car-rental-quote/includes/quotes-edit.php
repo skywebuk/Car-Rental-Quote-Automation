@@ -166,44 +166,18 @@ if (!function_exists('crqa_get_product_attribute')) {
 function crqa_get_quote_activity($quote_id) {
     global $wpdb;
     $table_name = $wpdb->prefix . 'car_rental_quote_activity';
-    
-    // Create table if it doesn't exist
-    crqa_create_activity_table();
-    
+
+    // Create table if it doesn't exist (uses function from activity-tracking.php)
+    if (function_exists('crqa_create_activity_tracking_table')) {
+        crqa_create_activity_tracking_table();
+    }
+
     $activities = $wpdb->get_results($wpdb->prepare(
         "SELECT * FROM {$table_name} WHERE quote_id = %d ORDER BY activity_time DESC",
         $quote_id
     ));
-    
-    return $activities;
-}
 
-/**
- * Create activity tracking table
- */
-function crqa_create_activity_table() {
-    global $wpdb;
-    $table_name = $wpdb->prefix . 'car_rental_quote_activity';
-    
-    $charset_collate = $wpdb->get_charset_collate();
-    
-    $sql = "CREATE TABLE IF NOT EXISTS $table_name (
-        id mediumint(9) NOT NULL AUTO_INCREMENT,
-        quote_id mediumint(9) NOT NULL,
-        activity_type varchar(50) NOT NULL,
-        activity_time datetime DEFAULT CURRENT_TIMESTAMP,
-        ip_address varchar(45),
-        user_agent text,
-        referrer_url text,
-        extra_data text,
-        PRIMARY KEY (id),
-        KEY quote_id (quote_id),
-        KEY activity_type (activity_type),
-        KEY activity_time (activity_time)
-    ) $charset_collate;";
-    
-    require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-    dbDelta($sql);
+    return $activities;
 }
 
 /**
