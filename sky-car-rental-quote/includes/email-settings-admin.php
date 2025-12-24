@@ -11,31 +11,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-/**
- * Clean and format phone number for international use
- */
-if (!function_exists('crqa_clean_phone_number')) {
-    function crqa_clean_phone_number($phone) {
-        if (empty($phone)) {
-            return '';
-        }
-        
-        // Remove all non-numeric characters
-        $clean = preg_replace('/[^0-9]/', '', $phone);
-        
-        // Remove leading zeros
-        $clean = ltrim($clean, '0');
-        
-        // If it doesn't start with country code, assume UK (+44)
-        if (strlen($clean) == 10 && substr($clean, 0, 1) == '7') {
-            $clean = '44' . $clean;
-        } elseif (strlen($clean) == 11 && substr($clean, 0, 2) == '07') {
-            $clean = '44' . substr($clean, 1);
-        }
-        
-        return $clean;
-    }
-}
+// Note: crqa_clean_phone_number() is defined in quote-shared-functions.php
 
 /**
  * Build enhanced admin email HTML template - UPDATED with Quick Send button
@@ -279,8 +255,19 @@ function crqa_send_enhanced_admin_notification($quote_id, $data) {
     $company_name = get_option('crqa_company_name', 'Your Car Rental Company');
     $company_email = get_option('crqa_company_email', get_option('admin_email'));
     $email_logo = get_option('crqa_email_logo', '');
-    
-    $subject = sprintf('[%s] New Car Rental Quote Request #%s', $company_name, str_pad($quote_id, 5, '0', STR_PAD_LEFT));
+
+    // Sanitize company name for email header to prevent header injection
+    // Remove newlines, carriage returns, and other control characters
+    $safe_company_name = preg_replace('/[\r\n\t]/', '', $company_name);
+    $safe_company_name = sanitize_text_field($safe_company_name);
+
+    // Validate and sanitize email
+    $safe_company_email = sanitize_email($company_email);
+    if (!is_email($safe_company_email)) {
+        $safe_company_email = get_option('admin_email');
+    }
+
+    $subject = sprintf('[%s] New Car Rental Quote Request #%s', $safe_company_name, str_pad($quote_id, 5, '0', STR_PAD_LEFT));
     
     // Clean and format phone number for WhatsApp/Call
     $phone_number = crqa_clean_phone_number($quote->customer_phone);
@@ -324,7 +311,7 @@ function crqa_send_enhanced_admin_notification($quote_id, $data) {
     
     $headers = array(
         'Content-Type: text/html; charset=UTF-8',
-        'From: ' . $company_name . ' <' . $company_email . '>'
+        'From: ' . $safe_company_name . ' <' . $safe_company_email . '>'
     );
     
     // Send to all admin emails
@@ -582,8 +569,8 @@ function crqa_show_quick_send_success($quote, $is_resend = false) {
     <body>
         <div class="success-container">
             <div class="success-icon">✓</div>
-            <h1><?php echo $success_title; ?></h1>
-            <p><?php echo $success_message; ?> <strong><?php echo esc_html($quote->customer_email); ?></strong></p>
+            <h1><?php echo esc_html($success_title); ?></h1>
+            <p><?php echo esc_html($success_message); ?> <strong><?php echo esc_html($quote->customer_email); ?></strong></p>
             
             <div class="details">
                 <strong>Quote Details:</strong><br>

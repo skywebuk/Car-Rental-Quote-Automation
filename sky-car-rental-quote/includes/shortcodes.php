@@ -160,12 +160,17 @@ function crqa_shortcode_quote_price_new($atts) {
  * Helper function to format currency values - NO DECIMALS VERSION
  */
 function crqa_format_currency_value($amount, $decimals = 0) {
-    // Get currency symbol
-    $currency_symbol = '£'; // Default to pound
+    // Get currency symbol - check WooCommerce first, then plugin setting, then default
     if (function_exists('get_woocommerce_currency_symbol')) {
         $currency_symbol = get_woocommerce_currency_symbol();
+    } else {
+        // Use plugin setting if available, otherwise default to pound (UK-focused plugin)
+        $currency_symbol = get_option('crqa_currency_symbol', '£');
     }
-    
+
+    // Allow filtering of currency symbol for customization
+    $currency_symbol = apply_filters('crqa_currency_symbol', $currency_symbol);
+
     // Get currency position from WooCommerce if available
     $currency_pos = 'left';
     if (function_exists('get_option')) {
@@ -226,9 +231,11 @@ function crqa_shortcode_total_amount($atts) {
     
     $quote = crqa_get_current_quote();
     if (!$quote) return '';
-    
-    $rental_price = intval($quote->rental_price ?: 0);
-    $deposit_amount = intval($quote->deposit_amount ?: 0);
+
+    // Use round() before intval() to avoid truncation errors
+    // e.g., 99.7 should become 100, not 99
+    $rental_price = intval(round(floatval($quote->rental_price ?: 0)));
+    $deposit_amount = intval(round(floatval($quote->deposit_amount ?: 0)));
     $total = $rental_price + $deposit_amount;
     
     if ($total == 0 && $atts['show_zero'] === 'no') {

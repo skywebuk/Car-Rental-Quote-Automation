@@ -109,8 +109,8 @@ function crqa_display_general_settings_tab($company_name, $company_email, $admin
             <th scope="row">Rental Product Status</th>
             <td>
                 <?php if ($product_exists): ?>
-                    <span style="color: green;">✓ Product exists (ID: <?php echo $product_id; ?>)</span>
-                    <a href="<?php echo get_edit_post_link($product_id); ?>" target="_blank" class="button button-small">Edit Product</a>
+                    <span style="color: green;">✓ Product exists (ID: <?php echo intval($product_id); ?>)</span>
+                    <a href="<?php echo esc_url(get_edit_post_link($product_id)); ?>" target="_blank" class="button button-small">Edit Product</a>
                 <?php else: ?>
                     <span style="color: red;">✗ Product not found</span>
                 <?php endif; ?>
@@ -576,19 +576,20 @@ function crqa_display_form_config_item($index, $config, $handlers, $is_template 
         // Hide template items
         echo '<div style="display: none;">';
     }
+    $safe_index = is_numeric($index) ? intval($index) : esc_attr($index);
     ?>
-    <div class="<?php echo $item_class; ?>" data-index="<?php echo esc_attr($index); ?>" style="background: #fff; border: 1px solid #ccd0d4; margin-bottom: 20px; padding: 20px;">
+    <div class="<?php echo esc_attr($item_class); ?>" data-index="<?php echo esc_attr($index); ?>" style="background: #fff; border: 1px solid #ccd0d4; margin-bottom: 20px; padding: 20px;">
         <div class="form-config-header" style="cursor: move; margin-bottom: 15px;">
-            <h4 style="margin: 0; display: inline-block;">WPForm Configuration #<span class="form-number"><?php echo is_numeric($index) ? ($index + 1) : '{{index_display}}'; ?></span></h4>
+            <h4 style="margin: 0; display: inline-block;">WPForm Configuration #<span class="form-number"><?php echo is_numeric($index) ? intval($index + 1) : '{{index_display}}'; ?></span></h4>
             <button type="button" class="button button-link-delete remove-form-config" style="float: right; color: #a00;">Remove</button>
             <div style="clear: both;"></div>
         </div>
-        
+
         <table class="form-table">
             <tr>
                 <th scope="row">Form Plugin</th>
                 <td>
-                    <select name="form_config[<?php echo $index; ?>][form_handler]" class="handler-selector regular-text" data-saved-form="<?php echo esc_attr($config['form_id'] ?? ''); ?>">
+                    <select name="form_config[<?php echo $safe_index; ?>][form_handler]" class="handler-selector regular-text" data-saved-form="<?php echo esc_attr($config['form_id'] ?? ''); ?>">
                         <option value="wpforms" <?php selected($config['form_handler'] ?? '', 'wpforms'); ?>>WPForms</option>
                     </select>
                 </td>
@@ -596,9 +597,9 @@ function crqa_display_form_config_item($index, $config, $handlers, $is_template 
             <tr>
                 <th scope="row">Select WPForm</th>
                 <td>
-                    <select name="form_config[<?php echo $index; ?>][form_id]" class="form-selector regular-text" data-saved-value="<?php echo esc_attr($config['form_id'] ?? ''); ?>">
+                    <select name="form_config[<?php echo $safe_index; ?>][form_id]" class="form-selector regular-text" data-saved-value="<?php echo esc_attr($config['form_id'] ?? ''); ?>">
                         <option value="">— Select WPForm —</option>
-                        <?php 
+                        <?php
                         // This will be populated via AJAX when handler loads
                         ?>
                     </select>
@@ -608,7 +609,7 @@ function crqa_display_form_config_item($index, $config, $handlers, $is_template 
                 <th scope="row">Enabled</th>
                 <td>
                     <label>
-                        <input type="checkbox" name="form_config[<?php echo $index; ?>][enabled]" value="1" <?php checked($config['enabled'] ?? 0, 1); ?>>
+                        <input type="checkbox" name="form_config[<?php echo $safe_index; ?>][enabled]" value="1" <?php checked($config['enabled'] ?? 0, 1); ?>>
                         Enable this form for quote submissions
                     </label>
                 </td>

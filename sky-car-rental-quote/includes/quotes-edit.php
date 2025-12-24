@@ -108,28 +108,7 @@ if (!function_exists('crqa_calculate_rental_days')) {
     }
 }
 
-if (!function_exists('crqa_clean_phone_number')) {
-    function crqa_clean_phone_number($phone) {
-        if (empty($phone)) {
-            return '';
-        }
-        
-        // Remove all non-numeric characters
-        $clean = preg_replace('/[^0-9]/', '', $phone);
-        
-        // Remove leading zeros
-        $clean = ltrim($clean, '0');
-        
-        // If it doesn't start with country code, assume UK (+44)
-        if (strlen($clean) == 10 && substr($clean, 0, 1) == '7') {
-            $clean = '44' . $clean;
-        } elseif (strlen($clean) == 11 && substr($clean, 0, 2) == '07') {
-            $clean = '44' . substr($clean, 1);
-        }
-        
-        return $clean;
-    }
-}
+// Note: crqa_clean_phone_number() is defined in quote-shared-functions.php
 
 if (!function_exists('crqa_get_product_attribute')) {
     function crqa_get_product_attribute($product_id, $attribute_name) {
@@ -166,44 +145,18 @@ if (!function_exists('crqa_get_product_attribute')) {
 function crqa_get_quote_activity($quote_id) {
     global $wpdb;
     $table_name = $wpdb->prefix . 'car_rental_quote_activity';
-    
-    // Create table if it doesn't exist
-    crqa_create_activity_table();
-    
+
+    // Create table if it doesn't exist (uses function from activity-tracking.php)
+    if (function_exists('crqa_create_activity_tracking_table')) {
+        crqa_create_activity_tracking_table();
+    }
+
     $activities = $wpdb->get_results($wpdb->prepare(
         "SELECT * FROM {$table_name} WHERE quote_id = %d ORDER BY activity_time DESC",
         $quote_id
     ));
-    
-    return $activities;
-}
 
-/**
- * Create activity tracking table
- */
-function crqa_create_activity_table() {
-    global $wpdb;
-    $table_name = $wpdb->prefix . 'car_rental_quote_activity';
-    
-    $charset_collate = $wpdb->get_charset_collate();
-    
-    $sql = "CREATE TABLE IF NOT EXISTS $table_name (
-        id mediumint(9) NOT NULL AUTO_INCREMENT,
-        quote_id mediumint(9) NOT NULL,
-        activity_type varchar(50) NOT NULL,
-        activity_time datetime DEFAULT CURRENT_TIMESTAMP,
-        ip_address varchar(45),
-        user_agent text,
-        referrer_url text,
-        extra_data text,
-        PRIMARY KEY (id),
-        KEY quote_id (quote_id),
-        KEY activity_type (activity_type),
-        KEY activity_time (activity_time)
-    ) $charset_collate;";
-    
-    require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-    dbDelta($sql);
+    return $activities;
 }
 
 /**
@@ -283,11 +236,14 @@ function crqa_edit_quote_page($quote_id) {
     }
     
     // Handle form submission
-if (isset($_POST['submit'])) {
-    crqa_update_quote($quote_id);
-    // Instead of redirecting, set a flag for showing success message
-    $update_success = true;
-}
+    if (isset($_POST['submit'])) {
+        // Verify nonce before processing (also verified inside crqa_update_quote as defense-in-depth)
+        if (isset($_POST['_wpnonce']) && wp_verify_nonce($_POST['_wpnonce'], 'edit_quote_' . $quote_id)) {
+            crqa_update_quote($quote_id);
+            // Instead of redirecting, set a flag for showing success message
+            $update_success = true;
+        }
+    }
     
     // Handle send quote action
     if (isset($_POST['send_quote'])) {
@@ -650,7 +606,7 @@ $default_deposit = !empty($quote->deposit_amount) ? $quote->deposit_amount : $pr
                             <h4 style="margin: 0 0 10px 0; color: #1976d2;"><i class="fas fa-calculator"></i> Auto-Calculate Pricing</h4>
                             <p style="margin: 5px 0;"><strong>Price per day:</strong> <?php echo crqa_format_price($price_per_day); ?></p>
                             <?php if ($rental_days > 1): ?>
-                                <p style="margin: 5px 0;"><strong>Rental duration:</strong> <?php echo $rental_days; ?> days</p>
+                                <p style="margin: 5px 0;"><strong>Rental duration:</strong> <?php echo intval($rental_days); ?> days</p>
                                 <p style="margin: 5px 0;"><strong>Suggested total:</strong> <?php echo crqa_format_price($price_per_day * $rental_days); ?></p>
                             <?php endif; ?>
                             <?php if ($product_deposit && $product_deposit != 5000): ?>
@@ -663,10 +619,10 @@ $default_deposit = !empty($quote->deposit_amount) ? $quote->deposit_amount : $pr
                         
                         <script>
                         document.getElementById('auto-calculate-price').addEventListener('click', function() {
-                            var pricePerDay = <?php echo $price_per_day; ?>;
-                            var rentalDays = <?php echo $rental_days; ?>;
+                            var pricePerDay = <?php echo wp_json_encode(floatval($price_per_day)); ?>;
+                            var rentalDays = <?php echo wp_json_encode(intval($rental_days)); ?>;
                             var suggestedPrice = pricePerDay * rentalDays;
-                            
+
                             if (confirm('Auto-fill rental price with ' + suggestedPrice.toFixed(0) + '?')) {
                                 document.querySelector('input[name="rental_price"]').value = suggestedPrice.toFixed(0);
                                 updateTotal();
@@ -766,9 +722,8 @@ $default_deposit = !empty($quote->deposit_amount) ? $quote->deposit_amount : $pr
     </div>
     
     <style>
-    /* Add Font Awesome if not loaded */
-    @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css');
-    
+    /* Font Awesome is loaded via wp_enqueue_style in quote-shared-functions.php */
+
     /* Activity Section Styles */
     .crqa-activity-section {
         background: #fff;

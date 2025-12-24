@@ -56,10 +56,15 @@ function crqa_create_rental_product() {
 add_action('admin_init', 'crqa_handle_create_product');
 function crqa_handle_create_product() {
     if (isset($_GET['page']) && $_GET['page'] == 'crqa-settings' && isset($_GET['action']) && $_GET['action'] == 'create_product') {
+        // Check user capability first
+        if (!current_user_can('manage_options')) {
+            wp_die('You do not have permission to perform this action.');
+        }
+
         if (!wp_verify_nonce($_GET['_wpnonce'], 'crqa_create_product')) {
             wp_die('Security check failed');
         }
-        
+
         crqa_create_rental_product();
         wp_redirect(admin_url('admin.php?page=crqa-settings&product_created=1'));
         exit;
@@ -72,22 +77,30 @@ function crqa_handle_create_product() {
 add_action('wp_ajax_crqa_add_to_cart', 'crqa_add_to_cart');
 add_action('wp_ajax_nopriv_crqa_add_to_cart', 'crqa_add_to_cart');
 function crqa_add_to_cart() {
+    // Verify nonce first before any data validation to prevent information disclosure
+    // Use generic error message to avoid revealing whether quote exists
     if (!isset($_POST['quote_id']) || !isset($_POST['nonce'])) {
-        wp_die('Invalid request');
+        wp_send_json_error(array('message' => 'Invalid request'));
+        return;
     }
-    
-    if (!wp_verify_nonce($_POST['nonce'], 'crqa_quote_' . $_POST['quote_id'])) {
-        wp_die('Security check failed');
+
+    // Sanitize quote_id before using in nonce verification
+    $quote_id = intval($_POST['quote_id']);
+
+    if (!wp_verify_nonce($_POST['nonce'], 'crqa_quote_' . $quote_id)) {
+        wp_send_json_error(array('message' => 'Invalid request'));
+        return;
     }
-    
+
     global $wpdb;
     $table_name = $wpdb->prefix . 'car_rental_quotes';
-    
-    $quote_id = intval($_POST['quote_id']);
+
     $quote = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_name WHERE id = %d", $quote_id));
-    
+
     if (!$quote) {
-        wp_die('Quote not found');
+        // Use same generic message to avoid revealing quote existence
+        wp_send_json_error(array('message' => 'Invalid request'));
+        return;
     }
     
     // Get the rental product
@@ -421,10 +434,17 @@ function crqa_autofill_checkout_js() {
         
         // Run on page load
         autoFillCheckoutFields();
-        
+
         // Also run after checkout updates (in case fields are dynamically loaded)
         $(document.body).on('updated_checkout', function() {
-            setTimeout(autoFillCheckoutFields, 100);
+            // Use requestAnimationFrame for better performance, with fallback
+            if (typeof requestAnimationFrame !== 'undefined') {
+                requestAnimationFrame(function() {
+                    autoFillCheckoutFields();
+                });
+            } else {
+                setTimeout(autoFillCheckoutFields, 50);
+            }
         });
     
     </script>

@@ -87,25 +87,22 @@ function crqa_track_quote_view() {
     }
     
     // Check if this is a unique view (not refreshing)
-    $last_view_key = 'crqa_viewed_' . $quote_id . '_' . crqa_get_user_ip();
+    // Use IP + User Agent hash for better uniqueness
+    $visitor_hash = md5(crqa_get_user_ip() . (isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : ''));
+    $last_view_key = 'crqa_viewed_' . $quote_id . '_' . $visitor_hash;
     $last_view = get_transient($last_view_key);
-    
+
     if (!$last_view) {
-        // Record the view
+        // Record the view only if it's unique within the time window
         crqa_record_activity($quote_id, 'quote_viewed', array(
             'page_url' => crqa_get_current_url(),
             'is_unique' => true
         ));
-        
+
         // Set transient to prevent duplicate tracking for 30 minutes
         set_transient($last_view_key, true, 30 * MINUTE_IN_SECONDS);
-    } else {
-        // Still record but mark as repeat view
-        crqa_record_activity($quote_id, 'quote_viewed', array(
-            'page_url' => crqa_get_current_url(),
-            'is_unique' => false
-        ));
     }
+    // Don't record repeat views within the time window to prevent database bloat
 }
 
 /**

@@ -13,29 +13,40 @@ if (!defined('ABSPATH')) {
 
 /**
  * Helper function to get current quote
+ * Uses static variable to prevent global variable pollution from other plugins
  */
 function crqa_get_current_quote() {
-    // Check if quote is already loaded
-    if (isset($GLOBALS['crqa_current_quote'])) {
-        return $GLOBALS['crqa_current_quote'];
+    // Use static variable instead of $GLOBALS to prevent pollution from other plugins
+    static $cached_quote = null;
+    static $cache_initialized = false;
+
+    // Check if quote is already loaded in static cache
+    if ($cache_initialized) {
+        return $cached_quote;
     }
-    
+
     // Try to get quote from URL parameter
     $quote_hash = isset($_GET['quote']) ? sanitize_text_field($_GET['quote']) : '';
-    
+
     if (!$quote_hash) {
+        $cache_initialized = true;
         return null;
     }
-    
+
     global $wpdb;
     $table_name = $wpdb->prefix . 'car_rental_quotes';
-    
+
     $quote = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_name WHERE quote_hash = %s", $quote_hash));
-    
+
+    // Cache the result
+    $cached_quote = $quote;
+    $cache_initialized = true;
+
+    // Also set global for backwards compatibility with any code that reads it directly
     if ($quote) {
         $GLOBALS['crqa_current_quote'] = $quote;
     }
-    
+
     return $quote;
 }
 

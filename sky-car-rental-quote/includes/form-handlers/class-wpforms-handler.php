@@ -232,13 +232,13 @@ class CRQA_WPForms_Handler extends CRQA_Form_Handler_Interface {
                 $mapped_data['rental_price'] = $mapped_data['calculated_rental_price'];
             }
             if (!empty($mapped_data['calculated_rental_price']) && empty($mapped_data['deposit_amount'])) {
-    // Get deposit from product if available
-    if (!empty($mapped_data['product_id'])) {
-        $mapped_data['deposit_amount'] = crqa_get_deposit_amount($mapped_data['product_id']);
-    } else {
-        $mapped_data['deposit_amount'] = 5000; // Default deposit
-    }
-}
+                // Get deposit from product if available
+                if (!empty($mapped_data['product_id']) && function_exists('crqa_get_deposit_amount')) {
+                    $mapped_data['deposit_amount'] = crqa_get_deposit_amount($mapped_data['product_id']);
+                } else {
+                    $mapped_data['deposit_amount'] = 5000; // Default deposit
+                }
+            }
             if (!empty($mapped_data['calculated_prepaid_miles'])) {
                 $mapped_data['mileage_allowance'] = $mapped_data['calculated_prepaid_miles'];
             }
@@ -652,33 +652,44 @@ class CRQA_WPForms_Handler extends CRQA_Form_Handler_Interface {
             'taxonomy' => 'pa_car_subtitle',
             'hide_empty' => false
         ));
-        
+
         if (empty($all_terms) || is_wp_error($all_terms)) {
             return null;
         }
-        
-        $vehicle_name_lower = strtolower($vehicle_name);
+
+        $vehicle_name_lower = strtolower(trim($vehicle_name));
         $best_match = null;
         $best_score = 0;
-        
+
+        // Minimum length to avoid matching very short strings
+        if (strlen($vehicle_name_lower) < 3) {
+            return null;
+        }
+
         foreach ($all_terms as $term) {
-            $term_name_lower = strtolower($term->name);
+            $term_name_lower = strtolower(trim($term->name));
             $score = 0;
-            
+
+            // Skip very short term names
+            if (strlen($term_name_lower) < 3) {
+                continue;
+            }
+
             // Calculate match score
             if ($term_name_lower === $vehicle_name_lower) {
                 $score = 100;
             } elseif (strpos($term_name_lower, $vehicle_name_lower) !== false) {
-                $score = 80;
+                $score = 85;
             } elseif (strpos($vehicle_name_lower, $term_name_lower) !== false) {
-                $score = 70;
+                $score = 80;
             } else {
                 // Use similar_text for fuzzy matching
                 similar_text($term_name_lower, $vehicle_name_lower, $percent);
                 $score = $percent;
             }
-            
-            if ($score > $best_score && $score > 60) { // Minimum 60% match
+
+            // Increased threshold to 75% for better accuracy
+            if ($score > $best_score && $score >= 75) {
                 $best_match = $term;
                 $best_score = $score;
             }
@@ -733,23 +744,57 @@ class CRQA_WPForms_Handler extends CRQA_Form_Handler_Interface {
         $price_terms = wp_get_post_terms($product_id, 'pa_price_per_day');
         if (!is_wp_error($price_terms) && !empty($price_terms)) {
             $price_value = $price_terms[0]->name;
-            $price = floatval(preg_replace('/[^0-9.]/', '', $price_value));
+            $price = $this->parse_price_value($price_value);
         }
-        
+
         // Fallback to meta field
         if ($price == 0) {
             $price_meta = get_post_meta($product_id, 'price_per_day', true);
             if ($price_meta) {
-                $price = floatval(preg_replace('/[^0-9.]/', '', $price_meta));
+                $price = $this->parse_price_value($price_meta);
             }
         }
         
         // Cache the result
         $this->product_cache[$cache_key] = $price;
-        
+
         return $price;
     }
-    
+
+    /**
+     * Parse a price value string, handling multiple decimal points correctly
+     * @param string $value The price value to parse
+     * @return float The parsed price
+     */
+    protected function parse_price_value($value) {
+        if (empty($value)) {
+            return 0.0;
+        }
+
+        // Remove all non-numeric characters except dots and commas
+        $cleaned = preg_replace('/[^0-9.,]/', '', $value);
+
+        // Handle European format (comma as decimal separator)
+        // If there's a comma after the last dot, treat comma as decimal
+        if (preg_match('/\.\d{3},\d{2}$/', $cleaned)) {
+            // European format: 1.234,56 -> 1234.56
+            $cleaned = str_replace('.', '', $cleaned);
+            $cleaned = str_replace(',', '.', $cleaned);
+        } else {
+            // Standard format or UK format: remove commas (thousand separators)
+            $cleaned = str_replace(',', '', $cleaned);
+        }
+
+        // If multiple dots remain, keep only the last one as decimal
+        $parts = explode('.', $cleaned);
+        if (count($parts) > 2) {
+            $decimal = array_pop($parts);
+            $cleaned = implode('', $parts) . '.' . $decimal;
+        }
+
+        return floatval($cleaned);
+    }
+
     /**
      * Get pre-paid miles from product
      * @param int $product_id
@@ -954,9 +999,10 @@ class CRQA_WPForms_Handler extends CRQA_Form_Handler_Interface {
     
     /**
      * Get user IP address
+     * @param bool $public_only If true, only return public IPs (for geolocation). If false, accept any valid IP.
      * @return string
      */
-    protected function get_user_ip() {
+    protected function get_user_ip($public_only = false) {
         $ip_headers = array(
             'HTTP_CF_CONNECTING_IP',     // Cloudflare
             'HTTP_CLIENT_IP',             // Proxy
@@ -967,20 +1013,38 @@ class CRQA_WPForms_Handler extends CRQA_Form_Handler_Interface {
             'HTTP_FORWARDED',             // Forwarded
             'REMOTE_ADDR'                 // Standard
         );
-        
+
         foreach ($ip_headers as $header) {
             if (!empty($_SERVER[$header])) {
                 $ips = explode(',', $_SERVER[$header]);
                 $ip = trim($ips[0]);
-                
-                // Validate IP
-                if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) !== false) {
+
+                // Validate IP format first
+                if (filter_var($ip, FILTER_VALIDATE_IP) === false) {
+                    continue;
+                }
+
+                // If public_only, skip private/reserved ranges
+                if ($public_only) {
+                    if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) !== false) {
+                        return $ip;
+                    }
+                } else {
+                    // Accept any valid IP (including private ranges for logging)
                     return $ip;
                 }
             }
         }
-        
-        return isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : 'Unknown';
+
+        // Fallback to REMOTE_ADDR with validation
+        if (isset($_SERVER['REMOTE_ADDR'])) {
+            $ip = $_SERVER['REMOTE_ADDR'];
+            if (filter_var($ip, FILTER_VALIDATE_IP) !== false) {
+                return $ip;
+            }
+        }
+
+        return 'Unknown';
     }
     
     /**
@@ -988,41 +1052,59 @@ class CRQA_WPForms_Handler extends CRQA_Form_Handler_Interface {
      * @return string
      */
     protected function get_user_location() {
-        $ip = $this->get_user_ip();
-        
-        if ($ip === 'Unknown' || filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
+        // Get public IP only for geolocation (private IPs can't be geolocated)
+        $ip = $this->get_user_ip(true);
+
+        if ($ip === 'Unknown') {
             return 'Unknown';
         }
-        
-        // Check cache
+
+        // Check cache first
         $location = get_transient('crqa_location_' . $ip);
         if ($location !== false) {
             return $location;
         }
-        
-        // Try to get location from IP
+
+        // Check if API is temporarily disabled (circuit breaker pattern)
+        $api_failures = get_transient('crqa_geoip_failures');
+        if ($api_failures && $api_failures >= 3) {
+            // API has failed 3+ times recently, skip to avoid rate limiting
+            return 'Unknown';
+        }
+
+        // Try to get location from IP with timeout
         $response = wp_safe_remote_get('http://ip-api.com/json/' . $ip . '?fields=status,city,regionName,country', array(
-            'timeout' => 5,
+            'timeout' => 3,  // Reduced timeout
             'redirection' => 0
         ));
-        
-        if (!is_wp_error($response)) {
-            $data = json_decode(wp_remote_retrieve_body($response), true);
-            if ($data && $data['status'] === 'success') {
-                $location_parts = array_filter(array(
-                    $data['city'] ?? '',
-                    $data['regionName'] ?? '',
-                    $data['country'] ?? ''
-                ));
-                $location = implode(', ', $location_parts) ?: 'Unknown';
-                
-                // Cache for 1 hour
-                set_transient('crqa_location_' . $ip, $location, HOUR_IN_SECONDS);
-                
-                return $location;
-            }
+
+        if (is_wp_error($response)) {
+            // Increment failure counter (circuit breaker)
+            $failures = intval(get_transient('crqa_geoip_failures')) + 1;
+            set_transient('crqa_geoip_failures', $failures, 5 * MINUTE_IN_SECONDS);
+            return 'Unknown';
         }
-        
+
+        $data = json_decode(wp_remote_retrieve_body($response), true);
+        if ($data && isset($data['status']) && $data['status'] === 'success') {
+            // Reset failure counter on success
+            delete_transient('crqa_geoip_failures');
+
+            $location_parts = array_filter(array(
+                $data['city'] ?? '',
+                $data['regionName'] ?? '',
+                $data['country'] ?? ''
+            ));
+            $location = implode(', ', $location_parts) ?: 'Unknown';
+
+            // Cache for 1 hour
+            set_transient('crqa_location_' . $ip, $location, HOUR_IN_SECONDS);
+
+            return $location;
+        }
+
+        // Cache "Unknown" briefly to avoid repeated failed lookups
+        set_transient('crqa_location_' . $ip, 'Unknown', 15 * MINUTE_IN_SECONDS);
         return 'Unknown';
     }
     

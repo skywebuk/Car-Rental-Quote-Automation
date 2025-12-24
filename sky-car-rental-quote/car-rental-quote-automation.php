@@ -264,18 +264,18 @@ final class CarRentalQuoteAutomation {
     private function load_core_modules() {
     $core_modules = array(
         'quote-helpers',
+        'quote-shared-functions',        // Load shared functions early (before modules that use them)
         'shortcodes',
         'woocommerce-integration',
         'rewrite-rules',
         'class-form-manager',
         'email-settings-admin',
         'email-settings-customer',
-        'quote-shared-functions',
         'quotes-list',
         'quotes-edit',
         'settings-enhanced',
         'payment-options-shortcode',
-        'activity-tracking'              // ADD THIS LINE
+        'activity-tracking'
     );
         
         foreach ($core_modules as $module) {
@@ -421,36 +421,70 @@ final class CarRentalQuoteAutomation {
     private function run_database_migrations($from_version) {
         global $wpdb;
         $table_name = $wpdb->prefix . 'car_rental_quotes';
-        
+
+        error_log('Car Rental Quote Automation: Running migrations from version ' . $from_version);
+
         // Version 1.1 - Add product_id column
         if (version_compare($from_version, '1.1', '<')) {
+            error_log('Car Rental Quote Automation: Running migration for version 1.1');
             $column_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table_name} LIKE 'product_id'");
             if (empty($column_exists)) {
-                $wpdb->query("ALTER TABLE {$table_name} ADD COLUMN product_id INT NULL AFTER vehicle_details");
-                $wpdb->query("ALTER TABLE {$table_name} ADD INDEX idx_product_id (product_id)");
+                $result = $wpdb->query("ALTER TABLE {$table_name} ADD COLUMN product_id INT NULL AFTER vehicle_details");
+                if ($result === false) {
+                    error_log('Car Rental Quote Automation: Failed to add product_id column - ' . $wpdb->last_error);
+                }
+                // Check if index exists before adding
+                $index_exists = $wpdb->get_results("SHOW INDEX FROM {$table_name} WHERE Key_name = 'idx_product_id'");
+                if (empty($index_exists)) {
+                    $wpdb->query("ALTER TABLE {$table_name} ADD INDEX idx_product_id (product_id)");
+                }
             }
         }
-        
+
         // Version 1.2 - Add tracking columns
         if (version_compare($from_version, '1.2', '<')) {
+            error_log('Car Rental Quote Automation: Running migration for version 1.2');
             $columns_to_add = array(
                 'updated_at' => "ALTER TABLE {$table_name} ADD COLUMN updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP AFTER created_at",
                 'ip_address' => "ALTER TABLE {$table_name} ADD COLUMN ip_address varchar(45) NULL",
                 'user_agent' => "ALTER TABLE {$table_name} ADD COLUMN user_agent text NULL",
                 'referrer_url' => "ALTER TABLE {$table_name} ADD COLUMN referrer_url text NULL"
             );
-            
+
             foreach ($columns_to_add as $column => $query) {
-                $column_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table_name} LIKE '{$column}'");
+                $column_exists = $wpdb->get_results($wpdb->prepare(
+                    "SHOW COLUMNS FROM {$table_name} LIKE %s",
+                    $column
+                ));
                 if (empty($column_exists)) {
-                    $wpdb->query($query);
+                    $result = $wpdb->query($query);
+                    if ($result === false) {
+                        error_log('Car Rental Quote Automation: Failed to add column ' . $column . ' - ' . $wpdb->last_error);
+                    }
                 }
             }
-            
-            // Add indexes
-            $wpdb->query("ALTER TABLE {$table_name} ADD INDEX idx_customer_email (customer_email)");
-            $wpdb->query("ALTER TABLE {$table_name} ADD INDEX idx_created_at (created_at)");
+
+            // Add indexes only if they don't exist
+            $indexes_to_add = array(
+                'idx_customer_email' => 'customer_email',
+                'idx_created_at' => 'created_at'
+            );
+
+            foreach ($indexes_to_add as $index_name => $column_name) {
+                $index_exists = $wpdb->get_results($wpdb->prepare(
+                    "SHOW INDEX FROM {$table_name} WHERE Key_name = %s",
+                    $index_name
+                ));
+                if (empty($index_exists)) {
+                    $result = $wpdb->query("ALTER TABLE {$table_name} ADD INDEX {$index_name} ({$column_name})");
+                    if ($result === false) {
+                        error_log('Car Rental Quote Automation: Failed to add index ' . $index_name . ' - ' . $wpdb->last_error);
+                    }
+                }
+            }
         }
+
+        error_log('Car Rental Quote Automation: Migrations completed');
     }
     
     /**
@@ -482,25 +516,31 @@ final class CarRentalQuoteAutomation {
             'assets/css/quotes-admin-custom.css' => '/* Car Rental Quotes Custom Admin Styles */',
             'assets/css/quotes-frontend.css' => '/* Car Rental Quotes Frontend Styles */'
         );
-        
+
         foreach ($css_files as $file => $content) {
             $file_path = $this->plugin_path . $file;
             if (!file_exists($file_path)) {
-                file_put_contents($file_path, $content);
+                $result = @file_put_contents($file_path, $content);
+                if ($result === false) {
+                    error_log('Car Rental Quote Automation: Failed to create CSS file: ' . $file_path);
+                }
             }
         }
-        
+
         // JS files
         $js_files = array(
             'assets/js/quotes-admin.js' => '/* Car Rental Quotes Admin Scripts */',
             'assets/js/forms-settings.js' => '/* Car Rental Quotes Form Settings Scripts */',
             'assets/js/quotes-frontend.js' => '/* Car Rental Quotes Frontend Scripts */'
         );
-        
+
         foreach ($js_files as $file => $content) {
             $file_path = $this->plugin_path . $file;
             if (!file_exists($file_path)) {
-                file_put_contents($file_path, $content);
+                $result = @file_put_contents($file_path, $content);
+                if ($result === false) {
+                    error_log('Car Rental Quote Automation: Failed to create JS file: ' . $file_path);
+                }
             }
         }
     }

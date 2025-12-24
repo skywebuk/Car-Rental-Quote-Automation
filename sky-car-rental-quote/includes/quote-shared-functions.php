@@ -164,10 +164,10 @@ function crqa_calculate_rental_days($rental_dates) {
         // Try US format if UK format didn't work
         $start_date = DateTime::createFromFormat('m/d/Y', $matches[1] . '/' . $matches[2] . '/' . $matches[3]);
         $end_date = DateTime::createFromFormat('m/d/Y', $matches[4] . '/' . $matches[5] . '/' . $matches[6]);
-        
+
         if ($start_date && $end_date) {
             $interval = $start_date->diff($end_date);
-            $days = $interval->days + 1; // Add 1 to include both start and end dates
+            $days = $interval->days; // Exclude return day (consistent with UK format)
             error_log('CRQA: Calculated ' . $days . ' days (US format) from ' . $start_date->format('Y-m-d') . ' to ' . $end_date->format('Y-m-d'));
             return max(1, $days);
         }
@@ -186,10 +186,10 @@ function crqa_calculate_rental_days($rental_dates) {
     if (preg_match('/(\d{4})-(\d{2})-(\d{2})\s*(?:to|[-–])\s*(\d{4})-(\d{2})-(\d{2})/', $rental_dates, $matches)) {
         $start_date = DateTime::createFromFormat('Y-m-d', $matches[1] . '-' . $matches[2] . '-' . $matches[3]);
         $end_date = DateTime::createFromFormat('Y-m-d', $matches[4] . '-' . $matches[5] . '-' . $matches[6]);
-        
+
         if ($start_date && $end_date) {
             $interval = $start_date->diff($end_date);
-            $days = $interval->days + 1; // Add 1 to include both start and end dates
+            $days = $interval->days; // Exclude return day (consistent with other formats)
             error_log('CRQA: Calculated ' . $days . ' days from ISO format');
             return max(1, $days);
         }
