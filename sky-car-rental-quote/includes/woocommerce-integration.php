@@ -72,22 +72,30 @@ function crqa_handle_create_product() {
 add_action('wp_ajax_crqa_add_to_cart', 'crqa_add_to_cart');
 add_action('wp_ajax_nopriv_crqa_add_to_cart', 'crqa_add_to_cart');
 function crqa_add_to_cart() {
+    // Verify nonce first before any data validation to prevent information disclosure
+    // Use generic error message to avoid revealing whether quote exists
     if (!isset($_POST['quote_id']) || !isset($_POST['nonce'])) {
-        wp_die('Invalid request');
+        wp_send_json_error(array('message' => 'Invalid request'));
+        return;
     }
-    
-    if (!wp_verify_nonce($_POST['nonce'], 'crqa_quote_' . $_POST['quote_id'])) {
-        wp_die('Security check failed');
+
+    // Sanitize quote_id before using in nonce verification
+    $quote_id = intval($_POST['quote_id']);
+
+    if (!wp_verify_nonce($_POST['nonce'], 'crqa_quote_' . $quote_id)) {
+        wp_send_json_error(array('message' => 'Invalid request'));
+        return;
     }
-    
+
     global $wpdb;
     $table_name = $wpdb->prefix . 'car_rental_quotes';
-    
-    $quote_id = intval($_POST['quote_id']);
+
     $quote = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_name WHERE id = %d", $quote_id));
-    
+
     if (!$quote) {
-        wp_die('Quote not found');
+        // Use same generic message to avoid revealing quote existence
+        wp_send_json_error(array('message' => 'Invalid request'));
+        return;
     }
     
     // Get the rental product
