@@ -619,10 +619,10 @@ $default_deposit = !empty($quote->deposit_amount) ? $quote->deposit_amount : $pr
                         
                         <script>
                         document.getElementById('auto-calculate-price').addEventListener('click', function() {
-                            var pricePerDay = <?php echo $price_per_day; ?>;
-                            var rentalDays = <?php echo $rental_days; ?>;
+                            var pricePerDay = <?php echo wp_json_encode(floatval($price_per_day)); ?>;
+                            var rentalDays = <?php echo wp_json_encode(intval($rental_days)); ?>;
                             var suggestedPrice = pricePerDay * rentalDays;
-                            
+
                             if (confirm('Auto-fill rental price with ' + suggestedPrice.toFixed(0) + '?')) {
                                 document.querySelector('input[name="rental_price"]').value = suggestedPrice.toFixed(0);
                                 updateTotal();

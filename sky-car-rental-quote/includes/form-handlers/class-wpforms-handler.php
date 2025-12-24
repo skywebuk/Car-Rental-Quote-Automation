@@ -652,33 +652,44 @@ class CRQA_WPForms_Handler extends CRQA_Form_Handler_Interface {
             'taxonomy' => 'pa_car_subtitle',
             'hide_empty' => false
         ));
-        
+
         if (empty($all_terms) || is_wp_error($all_terms)) {
             return null;
         }
-        
-        $vehicle_name_lower = strtolower($vehicle_name);
+
+        $vehicle_name_lower = strtolower(trim($vehicle_name));
         $best_match = null;
         $best_score = 0;
-        
+
+        // Minimum length to avoid matching very short strings
+        if (strlen($vehicle_name_lower) < 3) {
+            return null;
+        }
+
         foreach ($all_terms as $term) {
-            $term_name_lower = strtolower($term->name);
+            $term_name_lower = strtolower(trim($term->name));
             $score = 0;
-            
+
+            // Skip very short term names
+            if (strlen($term_name_lower) < 3) {
+                continue;
+            }
+
             // Calculate match score
             if ($term_name_lower === $vehicle_name_lower) {
                 $score = 100;
             } elseif (strpos($term_name_lower, $vehicle_name_lower) !== false) {
-                $score = 80;
+                $score = 85;
             } elseif (strpos($vehicle_name_lower, $term_name_lower) !== false) {
-                $score = 70;
+                $score = 80;
             } else {
                 // Use similar_text for fuzzy matching
                 similar_text($term_name_lower, $vehicle_name_lower, $percent);
                 $score = $percent;
             }
-            
-            if ($score > $best_score && $score > 60) { // Minimum 60% match
+
+            // Increased threshold to 75% for better accuracy
+            if ($score > $best_score && $score >= 75) {
                 $best_match = $term;
                 $best_score = $score;
             }
@@ -733,23 +744,57 @@ class CRQA_WPForms_Handler extends CRQA_Form_Handler_Interface {
         $price_terms = wp_get_post_terms($product_id, 'pa_price_per_day');
         if (!is_wp_error($price_terms) && !empty($price_terms)) {
             $price_value = $price_terms[0]->name;
-            $price = floatval(preg_replace('/[^0-9.]/', '', $price_value));
+            $price = $this->parse_price_value($price_value);
         }
-        
+
         // Fallback to meta field
         if ($price == 0) {
             $price_meta = get_post_meta($product_id, 'price_per_day', true);
             if ($price_meta) {
-                $price = floatval(preg_replace('/[^0-9.]/', '', $price_meta));
+                $price = $this->parse_price_value($price_meta);
             }
         }
         
         // Cache the result
         $this->product_cache[$cache_key] = $price;
-        
+
         return $price;
     }
-    
+
+    /**
+     * Parse a price value string, handling multiple decimal points correctly
+     * @param string $value The price value to parse
+     * @return float The parsed price
+     */
+    protected function parse_price_value($value) {
+        if (empty($value)) {
+            return 0.0;
+        }
+
+        // Remove all non-numeric characters except dots and commas
+        $cleaned = preg_replace('/[^0-9.,]/', '', $value);
+
+        // Handle European format (comma as decimal separator)
+        // If there's a comma after the last dot, treat comma as decimal
+        if (preg_match('/\.\d{3},\d{2}$/', $cleaned)) {
+            // European format: 1.234,56 -> 1234.56
+            $cleaned = str_replace('.', '', $cleaned);
+            $cleaned = str_replace(',', '.', $cleaned);
+        } else {
+            // Standard format or UK format: remove commas (thousand separators)
+            $cleaned = str_replace(',', '', $cleaned);
+        }
+
+        // If multiple dots remain, keep only the last one as decimal
+        $parts = explode('.', $cleaned);
+        if (count($parts) > 2) {
+            $decimal = array_pop($parts);
+            $cleaned = implode('', $parts) . '.' . $decimal;
+        }
+
+        return floatval($cleaned);
+    }
+
     /**
      * Get pre-paid miles from product
      * @param int $product_id

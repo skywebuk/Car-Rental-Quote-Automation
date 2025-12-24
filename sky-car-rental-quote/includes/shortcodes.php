@@ -231,9 +231,11 @@ function crqa_shortcode_total_amount($atts) {
     
     $quote = crqa_get_current_quote();
     if (!$quote) return '';
-    
-    $rental_price = intval($quote->rental_price ?: 0);
-    $deposit_amount = intval($quote->deposit_amount ?: 0);
+
+    // Use round() before intval() to avoid truncation errors
+    // e.g., 99.7 should become 100, not 99
+    $rental_price = intval(round(floatval($quote->rental_price ?: 0)));
+    $deposit_amount = intval(round(floatval($quote->deposit_amount ?: 0)));
     $total = $rental_price + $deposit_amount;
     
     if ($total == 0 && $atts['show_zero'] === 'no') {

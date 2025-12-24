@@ -56,10 +56,15 @@ function crqa_create_rental_product() {
 add_action('admin_init', 'crqa_handle_create_product');
 function crqa_handle_create_product() {
     if (isset($_GET['page']) && $_GET['page'] == 'crqa-settings' && isset($_GET['action']) && $_GET['action'] == 'create_product') {
+        // Check user capability first
+        if (!current_user_can('manage_options')) {
+            wp_die('You do not have permission to perform this action.');
+        }
+
         if (!wp_verify_nonce($_GET['_wpnonce'], 'crqa_create_product')) {
             wp_die('Security check failed');
         }
-        
+
         crqa_create_rental_product();
         wp_redirect(admin_url('admin.php?page=crqa-settings&product_created=1'));
         exit;
@@ -429,10 +434,17 @@ function crqa_autofill_checkout_js() {
         
         // Run on page load
         autoFillCheckoutFields();
-        
+
         // Also run after checkout updates (in case fields are dynamically loaded)
         $(document.body).on('updated_checkout', function() {
-            setTimeout(autoFillCheckoutFields, 100);
+            // Use requestAnimationFrame for better performance, with fallback
+            if (typeof requestAnimationFrame !== 'undefined') {
+                requestAnimationFrame(function() {
+                    autoFillCheckoutFields();
+                });
+            } else {
+                setTimeout(autoFillCheckoutFields, 50);
+            }
         });
     
     </script>
