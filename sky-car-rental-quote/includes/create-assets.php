@@ -33,11 +33,17 @@ function crqa_create_asset_files() {
     
     if (!file_exists($css_file)) {
         // Create empty CSS file
-        file_put_contents($css_file, '/* Car Rental Quotes Admin Styles */');
+        $result = @file_put_contents($css_file, '/* Car Rental Quotes Admin Styles */');
+        if ($result === false) {
+            error_log('Car Rental Quote Automation: Failed to create CSS file: ' . $css_file);
+        }
     }
-    
+
     if (!file_exists($js_file)) {
         // Create empty JS file
-        file_put_contents($js_file, '/* Car Rental Quotes Admin Scripts */');
+        $result = @file_put_contents($js_file, '/* Car Rental Quotes Admin Scripts */');
+        if ($result === false) {
+            error_log('Car Rental Quote Automation: Failed to create JS file: ' . $js_file);
+        }
     }
 }

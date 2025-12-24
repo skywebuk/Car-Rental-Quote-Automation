@@ -482,25 +482,31 @@ final class CarRentalQuoteAutomation {
             'assets/css/quotes-admin-custom.css' => '/* Car Rental Quotes Custom Admin Styles */',
             'assets/css/quotes-frontend.css' => '/* Car Rental Quotes Frontend Styles */'
         );
-        
+
         foreach ($css_files as $file => $content) {
             $file_path = $this->plugin_path . $file;
             if (!file_exists($file_path)) {
-                file_put_contents($file_path, $content);
+                $result = @file_put_contents($file_path, $content);
+                if ($result === false) {
+                    error_log('Car Rental Quote Automation: Failed to create CSS file: ' . $file_path);
+                }
             }
         }
-        
+
         // JS files
         $js_files = array(
             'assets/js/quotes-admin.js' => '/* Car Rental Quotes Admin Scripts */',
             'assets/js/forms-settings.js' => '/* Car Rental Quotes Form Settings Scripts */',
             'assets/js/quotes-frontend.js' => '/* Car Rental Quotes Frontend Scripts */'
         );
-        
+
         foreach ($js_files as $file => $content) {
             $file_path = $this->plugin_path . $file;
             if (!file_exists($file_path)) {
-                file_put_contents($file_path, $content);
+                $result = @file_put_contents($file_path, $content);
+                if ($result === false) {
+                    error_log('Car Rental Quote Automation: Failed to create JS file: ' . $file_path);
+                }
             }
         }
     }
