@@ -160,12 +160,17 @@ function crqa_shortcode_quote_price_new($atts) {
  * Helper function to format currency values - NO DECIMALS VERSION
  */
 function crqa_format_currency_value($amount, $decimals = 0) {
-    // Get currency symbol
-    $currency_symbol = '£'; // Default to pound
+    // Get currency symbol - check WooCommerce first, then plugin setting, then default
     if (function_exists('get_woocommerce_currency_symbol')) {
         $currency_symbol = get_woocommerce_currency_symbol();
+    } else {
+        // Use plugin setting if available, otherwise default to pound (UK-focused plugin)
+        $currency_symbol = get_option('crqa_currency_symbol', '£');
     }
-    
+
+    // Allow filtering of currency symbol for customization
+    $currency_symbol = apply_filters('crqa_currency_symbol', $currency_symbol);
+
     // Get currency position from WooCommerce if available
     $currency_pos = 'left';
     if (function_exists('get_option')) {

@@ -264,18 +264,18 @@ final class CarRentalQuoteAutomation {
     private function load_core_modules() {
     $core_modules = array(
         'quote-helpers',
+        'quote-shared-functions',        // Load shared functions early (before modules that use them)
         'shortcodes',
         'woocommerce-integration',
         'rewrite-rules',
         'class-form-manager',
         'email-settings-admin',
         'email-settings-customer',
-        'quote-shared-functions',
         'quotes-list',
         'quotes-edit',
         'settings-enhanced',
         'payment-options-shortcode',
-        'activity-tracking'              // ADD THIS LINE
+        'activity-tracking'
     );
         
         foreach ($core_modules as $module) {

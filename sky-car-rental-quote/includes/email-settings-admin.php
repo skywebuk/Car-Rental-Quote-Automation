@@ -11,31 +11,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-/**
- * Clean and format phone number for international use
- */
-if (!function_exists('crqa_clean_phone_number')) {
-    function crqa_clean_phone_number($phone) {
-        if (empty($phone)) {
-            return '';
-        }
-        
-        // Remove all non-numeric characters
-        $clean = preg_replace('/[^0-9]/', '', $phone);
-        
-        // Remove leading zeros
-        $clean = ltrim($clean, '0');
-        
-        // If it doesn't start with country code, assume UK (+44)
-        if (strlen($clean) == 10 && substr($clean, 0, 1) == '7') {
-            $clean = '44' . $clean;
-        } elseif (strlen($clean) == 11 && substr($clean, 0, 2) == '07') {
-            $clean = '44' . substr($clean, 1);
-        }
-        
-        return $clean;
-    }
-}
+// Note: crqa_clean_phone_number() is defined in quote-shared-functions.php
 
 /**
  * Build enhanced admin email HTML template - UPDATED with Quick Send button

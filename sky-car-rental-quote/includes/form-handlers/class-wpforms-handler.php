@@ -954,9 +954,10 @@ class CRQA_WPForms_Handler extends CRQA_Form_Handler_Interface {
     
     /**
      * Get user IP address
+     * @param bool $public_only If true, only return public IPs (for geolocation). If false, accept any valid IP.
      * @return string
      */
-    protected function get_user_ip() {
+    protected function get_user_ip($public_only = false) {
         $ip_headers = array(
             'HTTP_CF_CONNECTING_IP',     // Cloudflare
             'HTTP_CLIENT_IP',             // Proxy
@@ -967,20 +968,38 @@ class CRQA_WPForms_Handler extends CRQA_Form_Handler_Interface {
             'HTTP_FORWARDED',             // Forwarded
             'REMOTE_ADDR'                 // Standard
         );
-        
+
         foreach ($ip_headers as $header) {
             if (!empty($_SERVER[$header])) {
                 $ips = explode(',', $_SERVER[$header]);
                 $ip = trim($ips[0]);
-                
-                // Validate IP
-                if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) !== false) {
+
+                // Validate IP format first
+                if (filter_var($ip, FILTER_VALIDATE_IP) === false) {
+                    continue;
+                }
+
+                // If public_only, skip private/reserved ranges
+                if ($public_only) {
+                    if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) !== false) {
+                        return $ip;
+                    }
+                } else {
+                    // Accept any valid IP (including private ranges for logging)
                     return $ip;
                 }
             }
         }
-        
-        return isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : 'Unknown';
+
+        // Fallback to REMOTE_ADDR with validation
+        if (isset($_SERVER['REMOTE_ADDR'])) {
+            $ip = $_SERVER['REMOTE_ADDR'];
+            if (filter_var($ip, FILTER_VALIDATE_IP) !== false) {
+                return $ip;
+            }
+        }
+
+        return 'Unknown';
     }
     
     /**
@@ -988,9 +1007,10 @@ class CRQA_WPForms_Handler extends CRQA_Form_Handler_Interface {
      * @return string
      */
     protected function get_user_location() {
-        $ip = $this->get_user_ip();
-        
-        if ($ip === 'Unknown' || filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
+        // Get public IP only for geolocation (private IPs can't be geolocated)
+        $ip = $this->get_user_ip(true);
+
+        if ($ip === 'Unknown') {
             return 'Unknown';
         }
         
