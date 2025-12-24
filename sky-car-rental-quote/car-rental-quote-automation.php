@@ -694,5 +694,26 @@ final class CarRentalQuoteAutomation {
     }
 }
 
+/**
+ * Declare WooCommerce HPOS and Blocks compatibility
+ */
+add_action('before_woocommerce_init', function() {
+    if (class_exists('\Automattic\WooCommerce\Utilities\FeaturesUtil')) {
+        // Declare HPOS (High-Performance Order Storage) compatibility
+        \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility(
+            'custom_order_tables',
+            __FILE__,
+            true
+        );
+
+        // Declare Cart and Checkout Blocks compatibility
+        \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility(
+            'cart_checkout_blocks',
+            __FILE__,
+            true
+        );
+    }
+});
+
 // Initialize plugin
 CarRentalQuoteAutomation::get_instance();
