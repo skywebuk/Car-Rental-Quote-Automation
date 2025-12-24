@@ -1058,36 +1058,53 @@ class CRQA_WPForms_Handler extends CRQA_Form_Handler_Interface {
         if ($ip === 'Unknown') {
             return 'Unknown';
         }
-        
-        // Check cache
+
+        // Check cache first
         $location = get_transient('crqa_location_' . $ip);
         if ($location !== false) {
             return $location;
         }
-        
-        // Try to get location from IP
+
+        // Check if API is temporarily disabled (circuit breaker pattern)
+        $api_failures = get_transient('crqa_geoip_failures');
+        if ($api_failures && $api_failures >= 3) {
+            // API has failed 3+ times recently, skip to avoid rate limiting
+            return 'Unknown';
+        }
+
+        // Try to get location from IP with timeout
         $response = wp_safe_remote_get('http://ip-api.com/json/' . $ip . '?fields=status,city,regionName,country', array(
-            'timeout' => 5,
+            'timeout' => 3,  // Reduced timeout
             'redirection' => 0
         ));
-        
-        if (!is_wp_error($response)) {
-            $data = json_decode(wp_remote_retrieve_body($response), true);
-            if ($data && $data['status'] === 'success') {
-                $location_parts = array_filter(array(
-                    $data['city'] ?? '',
-                    $data['regionName'] ?? '',
-                    $data['country'] ?? ''
-                ));
-                $location = implode(', ', $location_parts) ?: 'Unknown';
-                
-                // Cache for 1 hour
-                set_transient('crqa_location_' . $ip, $location, HOUR_IN_SECONDS);
-                
-                return $location;
-            }
+
+        if (is_wp_error($response)) {
+            // Increment failure counter (circuit breaker)
+            $failures = intval(get_transient('crqa_geoip_failures')) + 1;
+            set_transient('crqa_geoip_failures', $failures, 5 * MINUTE_IN_SECONDS);
+            return 'Unknown';
         }
-        
+
+        $data = json_decode(wp_remote_retrieve_body($response), true);
+        if ($data && isset($data['status']) && $data['status'] === 'success') {
+            // Reset failure counter on success
+            delete_transient('crqa_geoip_failures');
+
+            $location_parts = array_filter(array(
+                $data['city'] ?? '',
+                $data['regionName'] ?? '',
+                $data['country'] ?? ''
+            ));
+            $location = implode(', ', $location_parts) ?: 'Unknown';
+
+            // Cache for 1 hour
+            set_transient('crqa_location_' . $ip, $location, HOUR_IN_SECONDS);
+
+            return $location;
+        }
+
+        // Cache "Unknown" briefly to avoid repeated failed lookups
+        set_transient('crqa_location_' . $ip, 'Unknown', 15 * MINUTE_IN_SECONDS);
         return 'Unknown';
     }
     
