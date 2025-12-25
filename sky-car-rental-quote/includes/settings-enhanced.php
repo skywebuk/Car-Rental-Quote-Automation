@@ -358,55 +358,7 @@ function crqa_display_forms_settings_tab($forms_config, $active_handlers) {
                         });
                     }
                 });
-                
-                // Load forms when handler is selected (auto-trigger for WPForms)
-                $(document).on('change', '.handler-selector', function() {
-                    var $this = $(this);
-                    var $container = $this.closest('.form-config-item');
-                    var handlerId = $this.val();
-                    var $formSelector = $container.find('.form-selector');
-                    var savedFormId = $formSelector.attr('data-saved-value') || '';
-                    
-                    console.log('Handler changed to:', handlerId, 'Saved form:', savedFormId);
-                    
-                    // Clear form selector
-                    $formSelector.html('<option value="">— Loading forms... —</option>').prop('disabled', true);
-                    
-                    if (!handlerId) {
-                        $formSelector.html('<option value="">— Select WPForms first —</option>').prop('disabled', false);
-                        $container.find('.field-mappings').empty();
-                        return;
-                    }
-                    
-                    // AJAX request to get forms
-                    $.post(ajaxurl, {
-                        action: 'crqa_get_handler_forms',
-                        handler_id: handlerId,
-                        nonce: '<?php echo wp_create_nonce('crqa_get_forms'); ?>'
-                    }, function(response) {
-                        console.log('Forms loaded:', response);
-                        
-                        if (response.success && response.data.forms && response.data.forms.length > 0) {
-                            var options = '<option value="">— Select WPForm —</option>';
-                            $.each(response.data.forms, function(i, form) {
-                                var selected = (savedFormId && form.id == savedFormId) ? ' selected="selected"' : '';
-                                options += '<option value="' + form.id + '"' + selected + '>' + form.title + ' (ID: ' + form.id + ')</option>';
-                            });
-                            $formSelector.html(options).prop('disabled', false);
-                            
-                            // If saved form was selected, load its fields
-                            if (savedFormId && $formSelector.val() == savedFormId) {
-                                $formSelector.trigger('change');
-                            }
-                        } else {
-                            $formSelector.html('<option value="">— No WPForms found —</option>').prop('disabled', false);
-                        }
-                    }).fail(function(xhr, status, error) {
-                        console.error('Error loading forms:', error);
-                        $formSelector.html('<option value="">— Error loading forms —</option>').prop('disabled', false);
-                    });
-                });
-                
+
                 // Load form fields when form is selected
                 $(document).on('change', '.form-selector', function() {
                     var $this = $(this);
@@ -584,12 +536,62 @@ function crqa_display_forms_settings_tab($forms_config, $active_handlers) {
                     
                     formConfigIndex = $('.form-config-item').length;
                 }
-                
-                // Initialize existing forms - auto-trigger WPForms loading
+
+                // Function to load forms for a handler selector
+                function loadFormsForHandler($handlerSelector) {
+                    var $container = $handlerSelector.closest('.form-config-item');
+                    var handlerId = $handlerSelector.val();
+                    var $formSelector = $container.find('.form-selector');
+                    var savedFormId = $formSelector.attr('data-saved-value') || '';
+
+                    console.log('Loading forms for handler:', handlerId, 'Saved form:', savedFormId);
+
+                    if (!handlerId) {
+                        $formSelector.html('<option value="">— Select WPForms first —</option>').prop('disabled', false);
+                        return;
+                    }
+
+                    // Show loading state
+                    $formSelector.html('<option value="">— Loading forms... —</option>').prop('disabled', true);
+
+                    // AJAX request to get forms
+                    $.post(ajaxurl, {
+                        action: 'crqa_get_handler_forms',
+                        handler_id: handlerId,
+                        nonce: '<?php echo wp_create_nonce('crqa_get_forms'); ?>'
+                    }, function(response) {
+                        console.log('Forms loaded:', response);
+
+                        if (response.success && response.data.forms && response.data.forms.length > 0) {
+                            var options = '<option value="">— Select WPForm —</option>';
+                            $.each(response.data.forms, function(i, form) {
+                                var selected = (savedFormId && form.id == savedFormId) ? ' selected="selected"' : '';
+                                options += '<option value="' + form.id + '"' + selected + '>' + form.title + ' (ID: ' + form.id + ')</option>';
+                            });
+                            $formSelector.html(options).prop('disabled', false);
+
+                            // If saved form was selected, load its fields
+                            if (savedFormId && $formSelector.val() == savedFormId) {
+                                $formSelector.trigger('change');
+                            }
+                        } else {
+                            $formSelector.html('<option value="">— No WPForms found —</option>').prop('disabled', false);
+                        }
+                    }).fail(function(xhr, status, error) {
+                        console.error('Error loading forms:', error);
+                        $formSelector.html('<option value="">— Error loading forms —</option>').prop('disabled', false);
+                    });
+                }
+
+                // Initialize existing forms - load forms on page load
                 console.log('Initializing existing forms...');
                 $('.handler-selector').each(function() {
-                    // Set to wpforms and trigger change
-                    $(this).val('wpforms').trigger('change');
+                    loadFormsForHandler($(this));
+                });
+
+                // Also trigger on change for future changes
+                $(document).on('change', '.handler-selector', function() {
+                    loadFormsForHandler($(this));
                 });
                 
                 // Add form validation before submit
