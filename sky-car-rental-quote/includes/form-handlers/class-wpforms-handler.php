@@ -75,30 +75,64 @@ class CRQA_WPForms_Handler extends CRQA_Form_Handler_Interface {
      */
     public function get_forms() {
         if (!$this->is_active()) {
+            error_log('CRQA WPForms: get_forms() - WPForms not active');
             return array();
         }
-        
+
         // Check cache first
         $cache_key = 'wpforms_list';
         if (isset($this->forms_cache[$cache_key])) {
             return $this->forms_cache[$cache_key];
         }
-        
-        $forms = wpforms()->form->get('', array('orderby' => 'title'));
+
         $form_list = array();
-        
-        if (!empty($forms)) {
-            foreach ($forms as $form) {
-                $form_list[] = array(
-                    'id' => $form->ID,
-                    'title' => html_entity_decode($form->post_title, ENT_QUOTES)
-                );
+
+        // Try WPForms API first
+        try {
+            if (function_exists('wpforms') && is_object(wpforms()) && isset(wpforms()->form)) {
+                $forms = wpforms()->form->get('', array('orderby' => 'title'));
+                if (!empty($forms)) {
+                    foreach ($forms as $form) {
+                        $form_list[] = array(
+                            'id' => $form->ID,
+                            'title' => html_entity_decode($form->post_title, ENT_QUOTES)
+                        );
+                    }
+                }
             }
+        } catch (Exception $e) {
+            error_log('CRQA WPForms: API error - ' . $e->getMessage());
         }
-        
+
+        // Fallback: Query WPForms post type directly if API didn't work
+        if (empty($form_list)) {
+            error_log('CRQA WPForms: Trying direct post query fallback');
+            $args = array(
+                'post_type'      => 'wpforms',
+                'posts_per_page' => -1,
+                'post_status'    => 'publish',
+                'orderby'        => 'title',
+                'order'          => 'ASC',
+            );
+
+            $forms_query = new WP_Query($args);
+
+            if ($forms_query->have_posts()) {
+                foreach ($forms_query->posts as $form) {
+                    $form_list[] = array(
+                        'id' => $form->ID,
+                        'title' => html_entity_decode($form->post_title, ENT_QUOTES)
+                    );
+                }
+            }
+            wp_reset_postdata();
+        }
+
+        error_log('CRQA WPForms: Found ' . count($form_list) . ' forms');
+
         // Cache the result
         $this->forms_cache[$cache_key] = $form_list;
-        
+
         return $form_list;
     }
     
