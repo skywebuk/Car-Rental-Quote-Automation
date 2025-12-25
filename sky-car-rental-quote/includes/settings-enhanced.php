@@ -283,18 +283,26 @@ function crqa_display_forms_settings_tab($forms_config, $active_handlers) {
                 $('#add-form-config').on('click', function(e) {
                     e.preventDefault();
                     console.log('Add form button clicked');
-                    
+
                     var newFormHtml = createNewFormHtml(formConfigIndex);
                     $('#forms-container').append(newFormHtml);
-                    
+
+                    // Get the newly added form config item
+                    var $newItem = $('#forms-container .form-config-item:last');
+
                     // Fade in the new form
-                    $('#forms-container .form-config-item:last').hide().fadeIn(300);
-                    
+                    $newItem.hide().fadeIn(300);
+
                     formConfigIndex++;
-                    
+
+                    // Load forms for the new item
+                    var $handlerSelector = $newItem.find('.handler-selector');
+                    console.log('Loading forms for new item, handler:', $handlerSelector.val());
+                    loadFormsForHandler($handlerSelector);
+
                     // Scroll to the new form
                     $('html, body').animate({
-                        scrollTop: $('#forms-container .form-config-item:last').offset().top - 100
+                        scrollTop: $newItem.offset().top - 100
                     }, 500);
                 });
                 
