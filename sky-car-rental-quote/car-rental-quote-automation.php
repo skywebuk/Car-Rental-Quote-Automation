@@ -3,7 +3,7 @@
  * Plugin Name: Car Rental Quote Automation
  * Plugin URI: https://skywebdesign.co.uk/
  * Description: Automates car rental quote workflow with multiple form support, email notifications, and WooCommerce integration
- * Version: 2.3.2
+ * Version: 2.3.3
  * Author: Sky Web Design
  * License: GPL v2 or later
  * Text Domain: car-rental-quote-automation
@@ -27,7 +27,7 @@ final class CarRentalQuoteAutomation {
      * Plugin version
      * @var string
      */
-    const VERSION = '2.3.2';
+    const VERSION = '2.3.3';
     
     /**
      * Database version

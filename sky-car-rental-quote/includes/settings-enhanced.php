@@ -554,32 +554,57 @@ function crqa_display_forms_settings_tab($forms_config, $active_handlers) {
                     // Show loading state
                     $formSelector.html('<option value="">— Loading forms... —</option>').prop('disabled', true);
 
+                    // Remove any existing error notices in this container
+                    $container.find('.crqa-form-error').remove();
+
                     // AJAX request to get forms
                     $.post(ajaxurl, {
                         action: 'crqa_get_handler_forms',
                         handler_id: handlerId,
                         nonce: '<?php echo wp_create_nonce('crqa_get_forms'); ?>'
                     }, function(response) {
-                        console.log('Forms loaded:', response);
+                        console.log('Forms response:', response);
 
-                        if (response.success && response.data.forms && response.data.forms.length > 0) {
-                            var options = '<option value="">— Select WPForm —</option>';
-                            $.each(response.data.forms, function(i, form) {
-                                var selected = (savedFormId && form.id == savedFormId) ? ' selected="selected"' : '';
-                                options += '<option value="' + form.id + '"' + selected + '>' + form.title + ' (ID: ' + form.id + ')</option>';
-                            });
-                            $formSelector.html(options).prop('disabled', false);
+                        if (response.success) {
+                            if (response.data.forms && response.data.forms.length > 0) {
+                                var options = '<option value="">— Select WPForm —</option>';
+                                $.each(response.data.forms, function(i, form) {
+                                    var selected = (savedFormId && form.id == savedFormId) ? ' selected="selected"' : '';
+                                    options += '<option value="' + form.id + '"' + selected + '>' + form.title + ' (ID: ' + form.id + ')</option>';
+                                });
+                                $formSelector.html(options).prop('disabled', false);
 
-                            // If saved form was selected, load its fields
-                            if (savedFormId && $formSelector.val() == savedFormId) {
-                                $formSelector.trigger('change');
+                                // If saved form was selected, load its fields
+                                if (savedFormId && $formSelector.val() == savedFormId) {
+                                    $formSelector.trigger('change');
+                                }
+                            } else {
+                                // No forms found but WPForms is active
+                                var message = response.data.message || 'No WPForms found. Please create a form first.';
+                                $formSelector.html('<option value="">— ' + message + ' —</option>').prop('disabled', false);
+                                $container.find('.form-table').before('<div class="notice notice-warning crqa-form-error" style="margin: 10px 0;"><p>' + message + ' <a href="<?php echo admin_url('admin.php?page=wpforms-builder'); ?>" target="_blank">Create a form now</a></p></div>');
                             }
                         } else {
-                            $formSelector.html('<option value="">— No WPForms found —</option>').prop('disabled', false);
+                            // Error response
+                            var errorMsg = response.data && response.data.message ? response.data.message : 'Error loading forms';
+                            console.error('Error:', errorMsg);
+                            $formSelector.html('<option value="">— Error —</option>').prop('disabled', false);
+
+                            // Show error notice
+                            var notice = '<div class="notice notice-error crqa-form-error" style="margin: 10px 0;"><p><strong>Error:</strong> ' + errorMsg + '</p>';
+                            if (response.data && response.data.install_url) {
+                                notice += '<p><a href="' + response.data.install_url + '" class="button button-primary">Install WPForms</a></p>';
+                            }
+                            if (response.data && response.data.plugins_url) {
+                                notice += '<p><a href="' + response.data.plugins_url + '" class="button">Go to Plugins</a></p>';
+                            }
+                            notice += '</div>';
+                            $container.find('.form-table').before(notice);
                         }
                     }).fail(function(xhr, status, error) {
-                        console.error('Error loading forms:', error);
-                        $formSelector.html('<option value="">— Error loading forms —</option>').prop('disabled', false);
+                        console.error('AJAX Error:', status, error);
+                        $formSelector.html('<option value="">— Connection error —</option>').prop('disabled', false);
+                        $container.find('.form-table').before('<div class="notice notice-error crqa-form-error" style="margin: 10px 0;"><p><strong>Connection Error:</strong> Could not connect to server. Please refresh the page and try again.</p></div>');
                     });
                 }
 
@@ -845,29 +870,58 @@ add_action('wp_ajax_crqa_get_handler_forms', 'crqa_ajax_get_handler_forms');
 function crqa_ajax_get_handler_forms() {
     // Check permissions
     if (!current_user_can('manage_options')) {
-        wp_die('Unauthorized');
+        wp_send_json_error(array('message' => 'Unauthorized access'));
+        return;
     }
-    
+
     // Check nonce
     if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'crqa_get_forms')) {
-        wp_die('Security check failed');
+        wp_send_json_error(array('message' => 'Security check failed. Please refresh the page.'));
+        return;
     }
-    
-    $handler_id = sanitize_text_field($_POST['handler_id']);
-    
+
+    $handler_id = isset($_POST['handler_id']) ? sanitize_text_field($_POST['handler_id']) : '';
+
     // Only allow wpforms
     if ($handler_id !== 'wpforms') {
-        wp_send_json_error('Only WPForms is supported');
+        wp_send_json_error(array('message' => 'Only WPForms is supported'));
+        return;
     }
-    
+
+    // Check if WPForms is installed and active
+    if (!function_exists('wpforms') || !class_exists('WPForms')) {
+        wp_send_json_error(array(
+            'message' => 'WPForms plugin is not installed or not active. Please install and activate WPForms first.',
+            'install_url' => admin_url('plugin-install.php?s=wpforms&tab=search&type=term')
+        ));
+        return;
+    }
+
     $form_manager = crqa_form_manager();
     $handler = $form_manager->get_handler($handler_id);
-    
-    if (!$handler || !$handler->is_active()) {
-        wp_send_json_error('WPForms not found or not active');
+
+    if (!$handler) {
+        wp_send_json_error(array('message' => 'WPForms handler not found. Please try deactivating and reactivating the plugin.'));
+        return;
     }
-    
+
+    if (!$handler->is_active()) {
+        wp_send_json_error(array(
+            'message' => 'WPForms is installed but not active. Please activate WPForms.',
+            'plugins_url' => admin_url('plugins.php')
+        ));
+        return;
+    }
+
     $forms = $handler->get_forms();
-    
+
+    if (empty($forms)) {
+        wp_send_json_success(array(
+            'forms' => array(),
+            'message' => 'No WPForms found. Please create a form in WPForms first.'
+        ));
+        return;
+    }
+
     wp_send_json_success(array('forms' => $forms));
 }
